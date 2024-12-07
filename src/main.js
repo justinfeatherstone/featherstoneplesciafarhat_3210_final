@@ -3,6 +3,8 @@ import { createCamera } from "./camera.js";
 import { Planet } from "./planet.js";
 import { SCALE_FACTOR, ASTRONOMICAL_UNIT, SUN_DIAMETER } from "./constants.js";
 let scene, renderer, camera, controls;
+let currentFocusIndex = -1; // -1 means no focus
+let planetMeshes = []; // Array to store all planet meshes in order
 
 function addCubeBackground(scene) {
     const loader = new THREE.CubeTextureLoader();
@@ -111,21 +113,33 @@ function init() {
   // Create planets
   Object.entries(PLANETS).forEach(([name, data]) => {
     const planet = new Planet(
-        scale.size(data.diameter / 2), // Convert diameter to radius
+        scale.size(data.diameter / 2),
         data.texture,
         [scale.distance(data.distance), 0, 0],
         scale
     );
+    planet.mesh.name = name;
+    planetMeshes.push(planet.mesh);
     scene.add(planet.mesh);
   });
 
   animate();
+  window.addEventListener('keydown', handleKeyPress);
 }
 
 function animate() {
-  requestAnimationFrame(animate);
-  controls.update();
-  renderer.render(scene, camera);
+    requestAnimationFrame(animate);
+    
+    // Update controls
+    controls.update();
+    
+    // If focused on a planet, ensure camera maintains proper orientation
+    if (currentFocusIndex >= 0) {
+        const target = planetMeshes[currentFocusIndex];
+        controls.target.copy(target.position);
+    }
+    
+    renderer.render(scene, camera);
 }
 
 window.addEventListener("resize", () => {
@@ -133,5 +147,45 @@ window.addEventListener("resize", () => {
   camera.updateProjectionMatrix();
   renderer.setSize(window.innerWidth, window.innerHeight);
 });
+
+function focusOnPlanet(index) {
+    if (index < 0 || index >= planetMeshes.length) return;
+    
+    currentFocusIndex = index;
+    const targetPlanet = planetMeshes[index];
+    
+    // Reset controls target to planet position
+    controls.target.copy(targetPlanet.position);
+    
+    // Position camera at a good viewing distance based on planet size
+    const distance = targetPlanet.geometry.parameters.radius * 20;
+    const offset = new THREE.Vector3(distance, distance, distance);
+    camera.position.copy(targetPlanet.position).add(offset);
+    
+    // Update camera and controls
+    camera.lookAt(targetPlanet.position);
+    controls.update();
+}
+
+function handleKeyPress(event) {
+    switch(event.key) {
+        case 'ArrowRight':
+            focusOnPlanet((currentFocusIndex + 1) % planetMeshes.length);
+            console.log("Planet:", planetMeshes[currentFocusIndex]);
+            break;
+        case 'ArrowLeft':
+            console.log("ArrowLeft");
+            focusOnPlanet(currentFocusIndex <= 0 ? 
+                planetMeshes.length - 1 : currentFocusIndex - 1);
+            break;
+        case 'Escape':
+            // Reset to default view
+            currentFocusIndex = -1;
+            controls.target.set(0, 0, 0);
+            camera.position.set(0, scale.distance(ASTRONOMICAL_UNIT * 2), 
+                              scale.distance(ASTRONOMICAL_UNIT * 2));
+            break;
+    }
+}
 
 init();
