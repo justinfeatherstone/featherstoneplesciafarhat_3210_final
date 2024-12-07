@@ -3,8 +3,9 @@ import { createCamera } from "./camera.js";
 import { Planet } from "./planet.js";
 import { SCALE_FACTOR, ASTRONOMICAL_UNIT, SUN_DIAMETER } from "./constants.js";
 let scene, renderer, camera, controls;
-let currentFocusIndex = -1; // -1 means no focus
+let currentFocusIndex = 0; // -1 means no focus
 let planetMeshes = []; // Array to store all planet meshes in order
+let isComparisonView = false;
 
 function addCubeBackground(scene) {
     const loader = new THREE.CubeTextureLoader();
@@ -42,7 +43,7 @@ const scale = {
 // Real planet data
 const PLANETS = {
     sun: {
-        diameter: SUN_DIAMETER,
+        diameter: 1392684,
         distance: 0,
         texture: "static/textures/8k_sun.jpg"
     },
@@ -89,6 +90,9 @@ const PLANETS = {
 };
 
 // REFACTOR LATER
+// Optimization? When first loading a planet its slow to load, 
+// but once loaded it's fast, we should preload all the textures
+// and then just animate them in and out.
 function init() {
   scene = new THREE.Scene();
 
@@ -122,9 +126,12 @@ function init() {
     planetMeshes.push(planet.mesh);
     scene.add(planet.mesh);
   });
+  updatePlanetPositions();
+  focusOnPlanet(currentFocusIndex);
 
   animate();
   window.addEventListener('keydown', handleKeyPress);
+  console.log("Press 'C' to toggle comparison view");
 }
 
 function animate() {
@@ -210,6 +217,18 @@ function handleKeyPress(event) {
             camera.position.set(0, scale.distance(ASTRONOMICAL_UNIT * 2), 
                               scale.distance(ASTRONOMICAL_UNIT * 2));
             break;
+        case 'c':
+        case 'C':
+            isComparisonView = !isComparisonView;
+            updatePlanetPositions();
+            // Reset camera to view all planets
+            currentFocusIndex = -1;
+            controls.target.set(0, 0, 0);
+            const viewDistance = isComparisonView ? 
+                scale.size(SUN_DIAMETER * 2) : 
+                scale.distance(ASTRONOMICAL_UNIT * 2);
+            camera.position.set(0, viewDistance, viewDistance);
+            break;
     }
 }
 
@@ -224,6 +243,28 @@ function updateZoomSpeed() {
     } else {
         // Default zoom speed for solar system view
         controls.zoomSpeed = 1.0;
+    }
+}
+
+function updatePlanetPositions() {
+    if (isComparisonView) {
+        // Place planets side by side with small gaps
+        let currentX = 0;
+        planetMeshes.forEach((planetMesh) => {
+            const radius = planetMesh.geometry.parameters.radius;
+            currentX += radius; // Start at edge of previous planet
+            planetMesh.position.set(currentX, 0, 0);
+            currentX += radius + scale.size(1000000); // Add gap between planets
+        });
+    } else {
+        // Reset to original orbital positions
+        Object.entries(PLANETS).forEach(([name, data], index) => {
+            planetMeshes[index].position.set(
+                scale.distance(data.distance),
+                0,
+                0
+            );
+        });
     }
 }
 
