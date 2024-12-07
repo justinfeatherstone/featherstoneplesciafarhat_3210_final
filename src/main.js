@@ -1,7 +1,7 @@
 import * as THREE from "three";
 import { createCamera } from "./camera.js";
 import { Planet } from "./planet.js";
-
+import { SCALE_FACTOR, ASTRONOMICAL_UNIT, SUN_DIAMETER } from "./constants.js";
 let scene, renderer, camera, controls;
 
 function addCubeBackground(scene) {
@@ -17,6 +17,75 @@ function addCubeBackground(scene) {
     scene.background = texture;
 }
 
+const scale = {
+    // Convert actual kilometers to scene units with safety checks
+    size: (km) => {
+        const scaled = km / SCALE_FACTOR;
+        if (isNaN(scaled)) {
+            console.error(`Invalid size scaling for ${km} km`);
+            return 0.01; // fallback size
+        }
+        return scaled;
+    },
+    distance: (km) => {
+        const scaled = km / SCALE_FACTOR;
+        if (isNaN(scaled)) {
+            console.error(`Invalid distance scaling for ${km} km`);
+            return 0.01; // fallback distance
+        }
+        return scaled;
+    }
+};
+
+// Real planet data
+const PLANETS = {
+    sun: {
+        diameter: 1392700,
+        distance: 0,
+        texture: "static/textures/8k_sun.jpg"
+    },
+    mercury: {
+        diameter: 4879,
+        distance: 57909175,
+        texture: "static/textures/8k_mercury.jpg"
+    },
+    venus: {
+        diameter: 12104,
+        distance: 108208930,
+        texture: "static/textures/venus/8k_venus_surface.jpg"
+    },
+    earth: {
+        diameter: 12742,
+        distance: 149597890,
+        texture: "static/textures/earth/8k_earth_daymap.jpg"
+    },
+    mars: {
+        diameter: 6779,
+        distance: 227936640,
+        texture: "static/textures/8k_mars.jpg"
+    },
+    jupiter: {
+        diameter: 139820,
+        distance: 778412010,
+        texture: "static/textures/8k_jupiter.jpg"
+    },
+    saturn: {
+        diameter: 116460,
+        distance: 1426725400,
+        texture: "static/textures/saturn/8k_saturn.jpg"
+    },
+    uranus: {
+        diameter: 50724,
+        distance: 2870972200,
+        texture: "static/textures/2k_uranus.jpg"
+    },
+    neptune: {
+        diameter: 49244,
+        distance: 4498252900,
+        texture: "static/textures/2k_neptune.jpg"
+    }
+};
+
 // REFACTOR LATER
 function init() {
   scene = new THREE.Scene();
@@ -25,7 +94,7 @@ function init() {
   renderer.setSize(window.innerWidth, window.innerHeight);
   document.body.appendChild(renderer.domElement);
 
-  const { camera: cam, controls: ctrl } = createCamera(renderer);
+  const { camera: cam, controls: ctrl } = createCamera(renderer, scale);
   camera = cam;
   controls = ctrl;
 
@@ -39,91 +108,16 @@ function init() {
 
   addCubeBackground(scene);
 
-  // Define scaling factors
-  const scale = {
-    size: 10, // Adjust this to scale planet sizes
-    distance: 10, // Adjust this to scale distances
-  };
-
-  //Sun
-  const sun = new Planet(
-    109,
-    "static/textures/8k_sun.jpg",
-    [200, 0, 0],
-    scale
-  );
-  scene.add(sun.mesh);
-
-  // Mercury
-  const mercury = new Planet(
-    0.38,
-    "static/textures/8k_mercury.jpg",
-    [40, 0, 0],
-    scale
-  );
-  scene.add(mercury.mesh);
-
-  // Venus
-  const venus = new Planet(
-    0.95,
-    "static/textures/venus/8k_venus_surface.jpg",
-    [30, 0, 0],
-    scale
-  );
-  scene.add(venus.mesh);
-
-  const earth = new Planet(
-    1,
-    "static/textures/earth/8k_earth_daymap.jpg",
-    [10, 0, 0],
-    scale
-  );
-  scene.add(earth.mesh);
-
-  // Mars
-  const mars = new Planet(
-    0.53,
-    "static/textures/8k_mars.jpg",
-    [15, 0, 0],
-    scale
-  );
-  scene.add(mars.mesh);
-
-  // Jupiter
-  const jupiter = new Planet(
-    11.2,
-    "static/textures/8k_jupiter.jpg",
-    [-10, 0, 0],
-    scale
-  );
-  scene.add(jupiter.mesh);
-
-  // Saturn
-  const saturn = new Planet(
-    9.45,
-    "static/textures/saturn/8k_saturn.jpg",
-    [-45, 0, 0],
-    scale
-  );
-  scene.add(saturn.mesh);
-
-  // Uranus
-  const uranus = new Planet(
-    4.01,
-    "static/textures/2k_uranus.jpg",
-    [-80, 0, 0],
-    scale
-  );
-  scene.add(uranus.mesh);
-
-  // Neptune
-  const neptune = new Planet(
-    3.88,
-    "static/textures/2k_neptune.jpg",
-    [-115, 0, 0],
-    scale
-  );
-  scene.add(neptune.mesh);
+  // Create planets
+  Object.entries(PLANETS).forEach(([name, data]) => {
+    const planet = new Planet(
+        scale.size(data.diameter / 2), // Convert diameter to radius
+        data.texture,
+        [scale.distance(data.distance), 0, 0],
+        scale
+    );
+    scene.add(planet.mesh);
+  });
 
   animate();
 }
