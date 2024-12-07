@@ -1,3 +1,4 @@
-textures/*.jpg filter=lfs diff=lfs merge=lfs -text
-textures/*.png filter=lfs diff=lfs merge=lfs -text
-textures/*.tif filter=lfs diff=lfs merge=lfs -text
+*.jpg filter=lfs diff=lfs merge=lfs -text
+*.png filter=lfs diff=lfs merge=lfs -text
+*.tif filter=lfs diff=lfs merge=lfs -text
+
