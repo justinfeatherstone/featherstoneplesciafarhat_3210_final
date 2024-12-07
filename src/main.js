@@ -2,10 +2,12 @@ import * as THREE from "three";
 import { createCamera } from "./camera.js";
 import { Planet } from "./planet.js";
 import { SCALE_FACTOR, ASTRONOMICAL_UNIT, SUN_DIAMETER } from "./constants.js";
+import { UI } from "./ui.js";
 let scene, renderer, camera, controls;
 let currentFocusIndex = 0; // -1 means no focus
 let planetMeshes = []; // Array to store all planet meshes in order
 let isComparisonView = false;
+let ui;
 
 function addCubeBackground(scene) {
     const loader = new THREE.CubeTextureLoader();
@@ -132,6 +134,16 @@ function init() {
   animate();
   window.addEventListener('keydown', handleKeyPress);
   console.log("Press 'C' to toggle comparison view");
+
+  ui = new UI(PLANETS);
+  
+  // Update UI when focusing on planets
+  window.addEventListener('keydown', (event) => {
+    handleKeyPress(event);
+    if (currentFocusIndex >= 0) {
+        ui.updatePlanetInfo(planetMeshes[currentFocusIndex]);
+    }
+  });
 }
 
 function animate() {
