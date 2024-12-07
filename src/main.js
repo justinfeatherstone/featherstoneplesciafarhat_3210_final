@@ -42,7 +42,7 @@ const scale = {
 // Real planet data
 const PLANETS = {
     sun: {
-        diameter: 1392700,
+        diameter: SUN_DIAMETER,
         distance: 0,
         texture: "static/textures/8k_sun.jpg"
     },
@@ -130,10 +130,9 @@ function init() {
 function animate() {
     requestAnimationFrame(animate);
     
-    // Update controls
+    updateZoomSpeed();
     controls.update();
     
-    // If focused on a planet, ensure camera maintains proper orientation
     if (currentFocusIndex >= 0) {
         const target = planetMeshes[currentFocusIndex];
         controls.target.copy(target.position);
@@ -157,14 +156,40 @@ function focusOnPlanet(index) {
     // Reset controls target to planet position
     controls.target.copy(targetPlanet.position);
     
-    // Position camera at a good viewing distance based on planet size
-    const distance = targetPlanet.geometry.parameters.radius * 20;
-    const offset = new THREE.Vector3(distance, distance, distance);
+    // Calculate appropriate viewing distance based on planet size
+    const planetRadius = targetPlanet.geometry.parameters.radius;
+    let viewDistance;
+    
+    if (targetPlanet.name === 'sun') {
+        viewDistance = planetRadius * 5;
+    } else if (['jupiter', 'saturn'].includes(targetPlanet.name)) {
+        viewDistance = planetRadius * 8;
+    } else if (['uranus', 'neptune'].includes(targetPlanet.name)) {
+        viewDistance = planetRadius * 12;
+    } else {
+        // Smaller planets (Mercury, Venus, Earth, Mars)
+        viewDistance = planetRadius * 15;
+    }
+    
+    // Calculate camera position with offset
+    const offsetRatio = 0.5; // Adjust this to change viewing angle
+    const offset = new THREE.Vector3(
+        viewDistance * offsetRatio,
+        viewDistance * offsetRatio,
+        viewDistance
+    );
+    
+    // Set camera position relative to planet
     camera.position.copy(targetPlanet.position).add(offset);
     
     // Update camera and controls
     camera.lookAt(targetPlanet.position);
     controls.update();
+    
+    // Log info for debugging
+    console.log(`Focused on ${targetPlanet.name}`);
+    console.log(`Planet radius: ${planetRadius}`);
+    console.log(`View distance: ${viewDistance}`);
 }
 
 function handleKeyPress(event) {
@@ -185,6 +210,20 @@ function handleKeyPress(event) {
             camera.position.set(0, scale.distance(ASTRONOMICAL_UNIT * 2), 
                               scale.distance(ASTRONOMICAL_UNIT * 2));
             break;
+    }
+}
+
+function updateZoomSpeed() {
+    if (currentFocusIndex >= 0) {
+        const targetPlanet = planetMeshes[currentFocusIndex];
+        const planetRadius = targetPlanet.geometry.parameters.radius;
+        
+        // Adjust zoom speed based on planet size
+        const zoomSpeed = Math.max(0.5, planetRadius * 0.5);
+        controls.zoomSpeed = zoomSpeed;
+    } else {
+        // Default zoom speed for solar system view
+        controls.zoomSpeed = 1.0;
     }
 }
 
