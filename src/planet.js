@@ -1,6 +1,16 @@
 import * as THREE from 'three';
 
+/*
+ * Planet class
+ */
 export class Planet {
+    /*
+     * Constructor
+     * @param {Number} size - The size  
+     * @param {String} texturePath - The texture path
+     * @param {Array} position - The position
+     * @param {Object} scale - The scale
+     */
     constructor(size, texturePath, position, scale) {
         // Validate size
         if (isNaN(size) || size <= 0) {

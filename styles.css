@@ -40,4 +40,52 @@
 .controls {
   grid-column: 1;
   grid-row: 1;
+}
+
+.stat-group {
+    display: flex;
+    justify-content: space-between;
+    padding: 8px 0;
+    border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+}
+
+.stat-label {
+    color: var(--text-secondary);
+    font-size: 0.9em;
+}
+
+.stat-value {
+    color: var(--neon-blue);
+    font-weight: 600;
+}
+
+.control-group {
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+    margin-bottom: 20px;
+}
+
+.control-btn {
+    background: rgba(0, 242, 255, 0.1);
+    border: 1px solid var(--neon-blue);
+    color: var(--text-primary);
+    padding: 10px 15px;
+    border-radius: 4px;
+    cursor: pointer;
+    transition: all 0.3s ease;
+}
+
+.control-btn:hover {
+    background: rgba(0, 242, 255, 0.2);
+    box-shadow: var(--accent-glow);
+}
+
+.shortcuts {
+    margin-top: 20px;
+    padding: 10px;
+    background: rgba(0, 0, 0, 0.2);
+    border-radius: 4px;
+    font-size: 0.9em;
+    color: var(--text-secondary);
 } 

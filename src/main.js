@@ -17,6 +17,7 @@ let uiShader;
 
 /*
  * Add a cube background to the scene
+ * @param {Object} scene - The scene
  */
 function addCubeBackground(scene) {
   const loader = new THREE.CubeTextureLoader();
@@ -105,10 +106,14 @@ const PLANETS = {
   }
 };
 
-// REFACTOR LATER
+// REFACTOR INIT() LATER
 // Optimization? When first loading a planet its slow to load, 
 // but once loaded it's fast, we should preload all the textures
 // and then just animate them in and out.
+
+/*
+ * Initialize the scene
+ */
 function init() {
   scene = new THREE.Scene();
 
@@ -160,6 +165,21 @@ function init() {
   });
 
   uiShader = new UIShader();
+
+  // Add event listeners for UI buttons
+  document.querySelectorAll('.control-btn').forEach(button => {
+    button.addEventListener('click', (event) => {
+      const action = event.target.dataset.action;
+      switch(action) {
+        case 'compare':
+          handleKeyPress({ key: 'c' });
+          break;
+        case 'reset':
+          handleKeyPress({ key: 'Escape' });
+          break;
+      }
+    });
+  });
 }
 
 /*
@@ -196,6 +216,7 @@ window.addEventListener("resize", () => {
 
 /*
  * Focus on a planet
+ * @param {Number} index - The index of the planet
  */
 function focusOnPlanet(index) {
   if (index < 0 || index >= planetMeshes.length) return;
@@ -236,6 +257,8 @@ function focusOnPlanet(index) {
   camera.lookAt(targetPlanet.position);
   controls.update();
 
+  // Update UI
+  ui.updatePlanetInfo(targetPlanet);
   // Log info for debugging
   console.log(`Focused on ${targetPlanet.name}`);
   console.log(`Planet radius: ${planetRadius}`);
@@ -244,6 +267,7 @@ function focusOnPlanet(index) {
 
 /*
  * Handle key presses
+ * @param {Object} event - The event
  */
 function handleKeyPress(event) {
   switch (event.key) {

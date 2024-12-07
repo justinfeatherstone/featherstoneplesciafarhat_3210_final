@@ -1,11 +1,18 @@
 import * as THREE from 'three';
 
+/*
+ * UI shader class
+ */
 export class UIShader {
+    /*
+     * Constructor
+     */
     constructor() {
         this.clock = new THREE.Clock();
         this.scene = new THREE.Scene();
         this.camera = new THREE.OrthographicCamera(-1, 1, 1, -1, 0, 1);
         
+        // Future: install vite-glsl-loader and use import statements
         const vertexShader = `
             varying vec2 vUv;
 
@@ -15,6 +22,7 @@ export class UIShader {
             }
         `;
 
+        // Future: install vite-glsl-loader and use import statements
         const fragmentShader = `
             varying vec2 vUv;
             uniform float time;
@@ -47,6 +55,9 @@ export class UIShader {
         this.createPanelMeshes();
     }
 
+    /*
+     * Create meshes for each panel
+     */
     createPanelMeshes() {
         const panels = document.querySelectorAll('.panel');
         panels.forEach(panel => {
@@ -65,6 +76,9 @@ export class UIShader {
         });
     }
 
+    /*
+     * Update the shader
+     */
     update() {
         this.material.uniforms.time.value = this.clock.getElapsedTime();
     }

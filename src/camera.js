@@ -2,6 +2,12 @@ import * as THREE from 'three';
 import { OrbitControls } from 'three/examples/jsm/controls/OrbitControls.js';
 import { ASTRONOMICAL_UNIT } from './constants.js';
 
+/*
+ * Create a camera
+ * @param {Object} renderer - The renderer
+ * @param {Object} scale - The scale    
+ * @returns {Object} - The camera and controls
+ */
 export function createCamera(renderer, scale) {
     const camera = new THREE.PerspectiveCamera(
         75,
