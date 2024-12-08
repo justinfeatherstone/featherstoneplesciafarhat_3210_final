@@ -8,8 +8,19 @@ export class UI {
     constructor(planetData) {
         this.dataManager = new CelestialDataManager(planetData);
         this.planetInfo = document.getElementById('planet-details');
+        this.sectionStates = this.loadSectionStates();
+        this.defaultCollapsed = ['Quick Facts', 'Atmosphere']; // Sections collapsed by default
         this.createInfoPanels();
         this.setupEventListeners();
+    }
+
+    loadSectionStates() {
+        const saved = localStorage.getItem('planetSectionStates');
+        return saved ? JSON.parse(saved) : {};
+    }
+
+    saveSectionStates() {
+        localStorage.setItem('planetSectionStates', JSON.stringify(this.sectionStates));
     }
 
     /*
@@ -21,6 +32,7 @@ export class UI {
             <div class="control-group">
                 <button class="control-btn" data-action="compare">Compare Mode (C)</button>
                 <button class="control-btn" data-action="reset">Reset View (ESC)</button>
+                <button class="control-btn" data-action="reset-sections">Reset Sections</button>
             </div>
             <div class="shortcuts">
                 <p>← → Arrow Keys: Navigate Planets</p>
@@ -33,10 +45,49 @@ export class UI {
             const header = e.target.closest('.section-header');
             if (header) {
                 const section = header.parentElement;
+                const sectionTitle = header.querySelector('h3').textContent;
+                const planetName = this.currentPlanet;
+                
+                // Toggle collapsed state
                 section.classList.toggle('collapsed');
                 const arrow = header.querySelector('.collapse-arrow');
                 arrow.classList.toggle('rotated');
+
+                // Save state
+                if (!this.sectionStates[planetName]) {
+                    this.sectionStates[planetName] = {};
+                }
+                this.sectionStates[planetName][sectionTitle] = section.classList.contains('collapsed');
+                this.saveSectionStates();
             }
+
+            // Handle expand/collapse all buttons
+            const button = e.target.closest('.section-control-btn');
+            if (button) {
+                const action = button.dataset.action;
+                const sections = this.planetInfo.querySelectorAll('.info-section');
+                const isCollapse = action === 'collapse-all';
+
+                sections.forEach(section => {
+                    section.classList.toggle('collapsed', isCollapse);
+                    section.querySelector('.collapse-arrow').classList.toggle('rotated', isCollapse);
+                });
+
+                // Save states
+                const sectionStates = {};
+                sections.forEach(section => {
+                    const title = section.querySelector('h3').textContent;
+                    sectionStates[title] = isCollapse;
+                });
+                this.sectionStates[this.currentPlanet] = sectionStates;
+                this.saveSectionStates();
+            }
+        });
+
+        document.querySelector('[data-action="reset-sections"]').addEventListener('click', () => {
+            this.sectionStates = {};
+            localStorage.removeItem('planetSectionStates');
+            this.updatePlanetInfo(planetMeshes[currentFocusIndex]);
         });
     }
 
@@ -48,9 +99,17 @@ export class UI {
         const data = this.dataManager.getFormattedData(planetMesh.name);
         if (!data) return;
         
+        this.currentPlanet = planetMesh.name;
+        
         this.planetInfo.innerHTML = `
             <div class="planet-header">
-                <h2>${data.name}</h2>
+                <div class="header-top">
+                    <h2>${data.name}</h2>
+                    <div class="section-controls">
+                        <button class="section-control-btn" data-action="expand-all">Expand All</button>
+                        <button class="section-control-btn" data-action="collapse-all">Collapse All</button>
+                    </div>
+                </div>
                 
                 ${this.createSection('Basic Information', this.createBasicInfo(data))}
                 ${this.createSection('Physical Properties', this.createPhysicalProperties(data))}
@@ -59,14 +118,20 @@ export class UI {
                 ${data.facts ? this.createSection('Quick Facts', this.createFacts(data.facts)) : ''}
             </div>
         `;
+
+        // Restore section states
+        this.restoreSectionStates();
     }
 
     createSection(title, content) {
+        const savedState = this.sectionStates[this.currentPlanet]?.[title];
+        const isCollapsed = savedState !== undefined ? savedState : this.defaultCollapsed.includes(title);
+        
         return `
-            <div class="info-section">
+            <div class="info-section ${isCollapsed ? 'collapsed' : ''}">
                 <div class="section-header">
                     <h3>${title}</h3>
-                    <span class="collapse-arrow">▼</span>
+                    <span class="collapse-arrow ${isCollapsed ? 'rotated' : ''}">▼</span>
                 </div>
                 <div class="section-content">
                     ${content}
@@ -158,5 +223,18 @@ export class UI {
                 ${facts.map(fact => `<li>${fact}</li>`).join('')}
             </ul>
         `;
+    }
+
+    restoreSectionStates() {
+        const planetStates = this.sectionStates[this.currentPlanet];
+        if (!planetStates) return;
+
+        Object.entries(planetStates).forEach(([title, isCollapsed]) => {
+            const section = this.planetInfo.querySelector(`.info-section:has(h3:contains("${title}"))`);
+            if (section && isCollapsed) {
+                section.classList.add('collapsed');
+                section.querySelector('.collapse-arrow').classList.add('rotated');
+            }
+        });
     }
 }
