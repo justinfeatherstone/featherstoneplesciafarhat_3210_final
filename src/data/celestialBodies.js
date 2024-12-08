@@ -4,7 +4,7 @@
 export const CELESTIAL_BODIES = {
     sun: {
         name: "Sun",
-        type: "Star",
+        type: "Yellow Dwarf",
         diameter: 1392684,
         distance: 0,
         mass: 1.989e30,
@@ -29,7 +29,7 @@ export const CELESTIAL_BODIES = {
     },
     mercury: {
         name: "Mercury",
-        type: "Terrestrial",
+        type: "Terrestrial Planet",
         diameter: 4879,
         distance: 57909175,
         mass: 0.330e24,
@@ -54,7 +54,7 @@ export const CELESTIAL_BODIES = {
     },
     venus: {
         name: "Venus",
-        type: "Terrestrial",
+        type: "Terrestrial Planet",
         diameter: 12104,
         distance: 108208930,
         mass: 4.867e24,
@@ -82,7 +82,7 @@ export const CELESTIAL_BODIES = {
     },
     earth: {
         name: "Earth",
-        type: "Terrestrial",
+        type: "Terrestrial Planet",
         diameter: 12742,
         distance: 149597890,
         mass: 5.972e24,
@@ -108,7 +108,7 @@ export const CELESTIAL_BODIES = {
     },
     mars: {
         name: "Mars",
-        type: "Terrestrial",
+        type: "Terrestrial Planet",
         diameter: 6779,
         distance: 227936640,
         mass: 0.642e24,
@@ -131,7 +131,7 @@ export const CELESTIAL_BODIES = {
     },
     jupiter: {
         name: "Jupiter",
-        type: "Gas Giant",
+        type: "Gas Giant Planet",
         diameter: 139822,
         distance: 778547200,
         mass: 1.898e27,
@@ -145,7 +145,7 @@ export const CELESTIAL_BODIES = {
         },
         temperature: {
             mean: -110,
-            range: "-210 to -110°C"
+            range: "-210°C to -110°C"
         },
         facts: [
             "Largest planet in the solar system",
@@ -156,7 +156,7 @@ export const CELESTIAL_BODIES = {
     },
     saturn: {
         name: "Saturn",
-        type: "Gas Giant",
+        type: "Gas Giant Planet",
         diameter: 116460,
         distance: 1433449370,
         mass: 5.683e26,
@@ -170,7 +170,7 @@ export const CELESTIAL_BODIES = {
         },
         temperature: {
             mean: -140,
-            range: "-210 to -110°C"
+            range: "-210°C to -110°C"
         },
         facts: [
             "Second largest planet in the solar system",
@@ -180,7 +180,7 @@ export const CELESTIAL_BODIES = {
     },
     uranus: {
         name: "Uranus",
-        type: "Ice Giant",
+        type: "Ice Giant Planet",
         diameter: 50724,
         distance: 2870972200,
         mass: 8.681e25,
@@ -194,7 +194,7 @@ export const CELESTIAL_BODIES = {
         },
         temperature: {
             mean: -195,
-            range: "-220 to -180°C"
+            range: "-220°C to -180°C"
         },
         facts: [
             "Largest planet with a magnetic field primarily in the equatorial plane"
@@ -203,7 +203,7 @@ export const CELESTIAL_BODIES = {
     },
     neptune: {
         name: "Neptune",
-        type: "Ice Giant",
+        type: "Ice Giant Planet",
         diameter: 49244,
         distance: 4498252900,
         mass: 1.024e26,
@@ -217,11 +217,34 @@ export const CELESTIAL_BODIES = {
         },
         temperature: {
             mean: -200,
-            range: "-220 to -180°C"
+            range: "-220°C to -180°C"
         },
         facts: [
             "Neptune is the eighth and farthest known planet from the Sun in the Solar System"
         ],
         texture: "static/textures/2k_neptune.jpg"
+    },
+    pluto: {
+        name: "Pluto",
+        type: "Dwarf Planet",
+        diameter: 2370,
+        distance: 5906380000,
+        mass: 0.0146e24,
+        gravity: 0.62,
+        rotation_period: 6.39,
+        orbital_period: 90560,
+        atmosphere: {
+            composition: "Nitrogen, methane",
+        },
+        temperature: {
+            mean: -225,
+            range: "-230°C to -190°C"
+        },
+        facts: [
+            "Largest known dwarf planet",
+            "Discovered by Clyde Tombaugh in 1930",
+            "Not classified as a planet by the IAU :("
+        ],
+        texture: "static/textures/pluto/2k_pluto.jpg"
     }
 };

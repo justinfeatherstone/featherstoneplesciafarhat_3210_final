@@ -230,11 +230,17 @@ export class UI {
         if (!planetStates) return;
 
         Object.entries(planetStates).forEach(([title, isCollapsed]) => {
-            const section = this.planetInfo.querySelector(`.info-section:has(h3:contains("${title}"))`);
-            if (section && isCollapsed) {
-                section.classList.add('collapsed');
-                section.querySelector('.collapse-arrow').classList.add('rotated');
-            }
+            // Find section by title using a more compatible selector
+            const section = this.planetInfo.querySelector(`.info-section h3`);
+            const sections = this.planetInfo.querySelectorAll('.info-section');
+            
+            sections.forEach(section => {
+                const sectionTitle = section.querySelector('h3').textContent;
+                if (sectionTitle === title && isCollapsed) {
+                    section.classList.add('collapsed');
+                    section.querySelector('.collapse-arrow').classList.add('rotated');
+                }
+            });
         });
     }
 }
