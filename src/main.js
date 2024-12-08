@@ -79,22 +79,43 @@ function init() {
   light.position.set(0, 0, 0);
   scene.add(light);
 
-  // Ambient light
-  const ambientLight = new THREE.AmbientLight(0xffffff, 0.5);
+  // Add directional light for better surface details
+  const directionalLight = new THREE.DirectionalLight(0xffffff, 1);
+  directionalLight.position.set(5, 3, 5);
+  scene.add(directionalLight);
+
+  // Adjust ambient light intensity
+  const ambientLight = new THREE.AmbientLight(0xffffff, 0.3); // Reduced intensity
   scene.add(ambientLight);
 
   addCubeBackground(scene);
 
   // Create planets
   Object.entries(CELESTIAL_BODIES).forEach(([name, data]) => {
+    let normalMapPath = null;
+    let specularMapPath = null;
+    let cloudsMapPath = null;
+    let bumpMapPath = null;
+
+    if (name === 'earth') {
+      normalMapPath = data.normalMap;
+      specularMapPath = data.specularMap;
+      cloudsMapPath = data.cloudMap;
+      bumpMapPath = data.bumpMap;
+    }
+
     const planet = new Planet(
       scale.size(data.diameter / 2),
       data.texture,
+      name === 'earth' ? data.normalMap : null,
+      name === 'earth' ? data.specularMap : null,
+      name === 'earth' ? data.bumpMap : null,
+      name === 'earth' ? data.cloudMap : null,
       [scale.distance(data.distance), 0, 0],
       scale
     );
     planet.mesh.name = name;
-    planetMeshes.push(planet.mesh);
+    planetMeshes.push(planet);
     scene.add(planet.mesh);
   });
 
@@ -115,7 +136,7 @@ function init() {
   document.querySelectorAll('.control-btn').forEach(button => {
     button.addEventListener('click', (event) => {
       const action = event.target.dataset.action;
-      switch(action) {
+      switch (action) {
         case 'compare':
           handleKeyPress({ key: 'c' });
           break;
@@ -149,12 +170,28 @@ function handleNavigate(direction) {
 function animate() {
   requestAnimationFrame(animate);
 
-  updateZoomSpeed();
-  controls.update();
+  // Rotate each planet
+  planetMeshes.forEach((planet, index) => {
+    const celestialBody = CELESTIAL_BODIES[Object.keys(CELESTIAL_BODIES)[index]];
+
+    // Calculate rotation speed based on the planet's rotation period
+    let rotationSpeed = 0.002; // default speed
+
+    if (celestialBody.rotation_period) {
+      // Convert rotation period to speed, handling negative periods (retrograde rotation)
+      rotationSpeed = (1 / Math.abs(celestialBody.rotation_period)) * 0.1;
+      if (celestialBody.rotation_period < 0) {
+        rotationSpeed *= -1; // Reverse rotation for planets like Venus
+      }
+    }
+
+    // Rotate the planet directly
+    planet.rotatePlanet(rotationSpeed);
+  });
 
   // Update controls target
   if (currentFocusIndex >= 0) {
-    const target = planetMeshes[currentFocusIndex];
+    const target = planetMeshes[currentFocusIndex].mesh;
     controls.target.copy(target.position);
   }
 
@@ -163,6 +200,8 @@ function animate() {
     uiShader.update();
   }
 
+  updateZoomSpeed();
+  controls.update();
   renderer.render(scene, camera);
 }
 
@@ -183,7 +222,7 @@ function focusOnPlanet(index) {
   if (index < 0 || index >= planetMeshes.length) return;
 
   currentFocusIndex = index;
-  const targetPlanet = planetMeshes[index];
+  const targetPlanet = planetMeshes[index].mesh;
 
   // Reset controls target to planet position
   controls.target.copy(targetPlanet.position);
@@ -204,7 +243,7 @@ function focusOnPlanet(index) {
   }
 
   // Calculate camera position with offset
-  const offsetRatio = 0.5; // Adjust this to change viewing angle
+  const offsetRatio = 0.5;
   const offset = new THREE.Vector3(
     viewDistance * offsetRatio,
     viewDistance * offsetRatio,
@@ -270,7 +309,7 @@ function handleKeyPress(event) {
  */
 function updateZoomSpeed() {
   if (currentFocusIndex >= 0) {
-    const targetPlanet = planetMeshes[currentFocusIndex];
+    const targetPlanet = planetMeshes[currentFocusIndex].mesh;
     const planetRadius = targetPlanet.geometry.parameters.radius;
 
     // Adjust zoom speed based on planet size
@@ -292,13 +331,13 @@ function updatePlanetPositions() {
     planetMeshes.forEach((planetMesh) => {
       const radius = planetMesh.geometry.parameters.radius;
       currentX += radius; // Start at edge of previous planet
-      planetMesh.position.set(currentX, 0, 0);
+      planetMesh.mesh.position.set(currentX, 0, 0);
       currentX += radius + scale.size(1000000); // Add gap between planets
     });
   } else {
     // Reset to original orbital positions
     Object.entries(CELESTIAL_BODIES).forEach(([name, data], index) => {
-      planetMeshes[index].position.set(
+      planetMeshes[index].mesh.position.set(
         scale.distance(data.distance),
         0,
         0

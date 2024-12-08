@@ -104,7 +104,11 @@ export const CELESTIAL_BODIES = {
             "Only planet known to support life",
             "Has a single moon"
         ],
-        texture: "static/textures/earth/8k_earth_daymap.jpg"
+        texture: "static/textures/earth/8k_earth_daymap.jpg",
+        normalMap: "static/textures/earth/8k_earth_normal_map.jpg",
+        bumpMap: "static/textures/earth/1k_earth_bump_map.jpg",
+        specularMap: "static/textures/earth/8k_earth_specular_map.jpg",
+        cloudMap: "static/textures/earth/8k_earth_clouds.jpg"
     },
     mars: {
         name: "Mars",
@@ -199,7 +203,7 @@ export const CELESTIAL_BODIES = {
         facts: [
             "Largest planet with a magnetic field primarily in the equatorial plane"
         ],
-        texture: "static/textures/2k_uranus.jpg"
+        texture: "static/textures/uranus/2k_uranus.jpg"
     },
     neptune: {
         name: "Neptune",
