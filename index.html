@@ -3,13 +3,30 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Universe Simulation</title>
+    <title>Solar System Simulator - Interactive Solar System</title>
     <style>
         body { margin: 0; }
         canvas { display: block; }
     </style>
+    <link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@400;600&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="styles.css">
 </head>
 <body>
+    <div id="canvas-container"></div>
+    <div class="ui-container">
+        <div class="panel controls">
+            <h2>Navigation</h2>
+            <div class="control-buttons">
+                <!-- Dynamic controls -->
+            </div>
+        </div>
+        <div class="panel planet-info">
+            <h2>Celestial Body Information</h2>
+            <div id="planet-details">
+                <!-- Dynamic celestial body info -->
+            </div>
+        </div>
+    </div>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/three@0.128.0/examples/js/controls/OrbitControls.js"></script>
     <script type="module" src="src/main.js"></script>
