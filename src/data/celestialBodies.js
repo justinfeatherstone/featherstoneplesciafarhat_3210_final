@@ -180,7 +180,10 @@ export const CELESTIAL_BODIES = {
             "Second largest planet in the solar system",
             "Has a prominent ring system"
         ],
-        texture: "static/textures/saturn/8k_saturn.jpg"
+        texture: "static/textures/saturn/8k_saturn.jpg",
+        ringMap: "static/textures/saturn/8k_saturn_ring_alpha.png",
+        ringInnerRadius: 1.2 * (116460 / 2),
+        ringOuterRadius: 2.3 * (116460 / 2)
     },
     uranus: {
         name: "Uranus",
@@ -203,7 +206,10 @@ export const CELESTIAL_BODIES = {
         facts: [
             "Largest planet with a magnetic field primarily in the equatorial plane"
         ],
-        texture: "static/textures/uranus/2k_uranus.jpg"
+        texture: "static/textures/uranus/2k_uranus.jpg",
+        ringMap: "static/textures/uranus/uranus_ring_map.jpg",
+        ringInnerRadius: 1.2 * (50724 / 2),
+        ringOuterRadius: 1.7 * (50724 / 2)
     },
     neptune: {
         name: "Neptune",

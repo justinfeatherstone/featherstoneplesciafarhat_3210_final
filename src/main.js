@@ -44,6 +44,8 @@ const scale = {
     const scaled = km / SCALE_FACTOR;
     if (isNaN(scaled)) {
       console.error(`Invalid size scaling for ${km} km`);
+      console.log(CELESTIAL_BODIES.saturn.ringInnerRadius);
+      console.log(CELESTIAL_BODIES.saturn.ringOuterRadius);
       return 0.01; // fallback size
     }
     return scaled;
@@ -58,65 +60,86 @@ const scale = {
   }
 };
 
-// REFACTOR INIT() LATER
-// Optimization? When first loading a planet its slow to load, 
-// but once loaded it's fast, we should preload all the textures
-// and then just animate them in and out.
-
 /*
  * Initialize the scene
  */
 function init() {
+  // Create scene
   scene = new THREE.Scene();
-
+  
+  // Add background
+  addCubeBackground(scene);
+  
+  // Initialize renderer first
   renderer = new THREE.WebGLRenderer({ antialias: true });
   renderer.setSize(window.innerWidth, window.innerHeight);
-  document.body.appendChild(renderer.domElement);
-
-  const { camera: cam, controls: ctrl } = createCamera(renderer, scale);
-  camera = cam;
-  controls = ctrl;
-
-  const light = new THREE.PointLight(0xffffff, 1, 0);
-  light.position.set(0, 0, 0);
-  scene.add(light);
-
-  // Add directional light for better surface details
-  const directionalLight = new THREE.DirectionalLight(0xffffff, 1);
-  directionalLight.position.set(5, 3, 5);
-  scene.add(directionalLight);
-
-  // Adjust ambient light intensity
-  const ambientLight = new THREE.AmbientLight(0xffffff, 0.3); // Reduced intensity
+  renderer.setPixelRatio(window.devicePixelRatio);
+  document.getElementById('canvas-container').appendChild(renderer.domElement);
+  
+  // Now create camera with renderer
+  const cameraSetup = createCamera(renderer, scale);
+  camera = cameraSetup.camera;
+  controls = cameraSetup.controls;
+  
+  // Add lighting
+  const ambientLight = new THREE.AmbientLight(0xffffff, 0.5); // Soft white light
   scene.add(ambientLight);
-
-  addCubeBackground(scene);
-
-  // Create planets
+  
+  const directionalLight = new THREE.DirectionalLight(0xffffff, 1);
+  directionalLight.position.set(5, 10, 7.5);
+  scene.add(directionalLight);
+  
+  // Initialize planets
   Object.entries(CELESTIAL_BODIES).forEach(([name, data]) => {
     let normalMapPath = null;
     let specularMapPath = null;
     let cloudsMapPath = null;
     let bumpMapPath = null;
+    let ringMapPath = null;
+    let ringInnerRadius = null;
+    let ringOuterRadius = null;
 
-    if (name === 'earth') {
+    if (name.toLowerCase() === 'earth') {
       normalMapPath = data.normalMap;
       specularMapPath = data.specularMap;
       cloudsMapPath = data.cloudMap;
       bumpMapPath = data.bumpMap;
     }
 
+    // Define ring properties for Saturn and Uranus
+    if (name.toLowerCase() === 'saturn' || name.toLowerCase() === 'uranus') {
+      ringMapPath = data.ringMap; // Ensure this path is correct
+      console.log("Planet:", name);
+      console.log("Ring inner radius:", data.ringInnerRadius);
+      console.log("Ring outer radius:", data.ringOuterRadius);
+      ringInnerRadius = scale.size(data.ringInnerRadius); // Define in kilometers
+      ringOuterRadius = scale.size(data.ringOuterRadius); // Define in kilometers
+    }
+
+    // Validation: Check if ring properties are defined if ringMapPath is provided
+    if (ringMapPath && (!data.ringInnerRadius || !data.ringOuterRadius)) {
+      console.error(`Ring properties missing for ${name}. Rings will not be created.`);
+      ringMapPath = null;
+      ringInnerRadius = null;
+      ringOuterRadius = null;
+    }
+
+    // Create Planet instance with the name
     const planet = new Planet(
+      name, // Pass the name
       scale.size(data.diameter / 2),
       data.texture,
-      name === 'earth' ? data.normalMap : null,
-      name === 'earth' ? data.specularMap : null,
-      name === 'earth' ? data.bumpMap : null,
-      name === 'earth' ? data.cloudMap : null,
+      name.toLowerCase() === 'earth' ? data.normalMap : null,
+      name.toLowerCase() === 'earth' ? data.specularMap : null,
+      name.toLowerCase() === 'earth' ? data.bumpMap : null,
+      name.toLowerCase() === 'earth' ? data.cloudMap : null,
+      ringMapPath,          // Added ringMapPath
+      ringInnerRadius,      // Added ringInnerRadius
+      ringOuterRadius,      // Added ringOuterRadius
       [scale.distance(data.distance), 0, 0],
       scale
     );
-    planet.mesh.name = name;
+    planet.mesh.name = name.toLowerCase();
     planetMeshes.push(planet);
     scene.add(planet.mesh);
   });
