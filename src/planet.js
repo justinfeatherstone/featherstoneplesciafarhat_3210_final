@@ -48,7 +48,6 @@ export class Planet {
         const materialOptions = {
             normalMap: normalMap,
             map: texture,
-
             normalScale: new THREE.Vector2(2, 2), // Increased normal map effect
             bumpMap: bumpMap,
             bumpScale: 0.02,
@@ -96,12 +95,10 @@ export class Planet {
         // Rotate the planet itself
         this.mesh.rotation.y += delta;
         
-        // Rotate clouds at a different speed and direction for more realism
+        // Rotate clouds at a different speed for more realism
         if (this.clouds) {
-            // Make clouds rotate slightly faster and in a slightly different direction
-            this.clouds.rotation.y += delta * 1.2;  // 20% faster than the planet
-            this.clouds.rotation.x += delta * 0.1;  // Slight tilt in cloud movement
-            this.clouds.rotation.z += delta * 0.05; // Very slight wobble
+            // Make clouds rotate slightly faster than the planet
+            this.clouds.rotation.y += delta * 1.2;  // 20% faster rotation
         }
     }
 } 

@@ -15,6 +15,8 @@ let planetMeshes = []; // Array to store all planet meshes in order
 let isComparisonView = false;
 let ui;
 let uiShader;
+let timeScale = 1;
+let isPaused = false;
 
 /*
  * Add a cube background to the scene
@@ -146,6 +148,8 @@ function init() {
       }
     });
   });
+
+  initTimeControls();
 }
 
 /*
@@ -170,24 +174,65 @@ function handleNavigate(direction) {
 function animate() {
   requestAnimationFrame(animate);
 
-  // Rotate each planet
-  planetMeshes.forEach((planet, index) => {
-    const celestialBody = CELESTIAL_BODIES[Object.keys(CELESTIAL_BODIES)[index]];
+  if (!isPaused) {
+    // Rotate each planet
+    planetMeshes.forEach((planet, index) => {
+      const celestialBody = CELESTIAL_BODIES[Object.keys(CELESTIAL_BODIES)[index]];
+      let rotationSpeed = 0;
 
-    // Calculate rotation speed based on the planet's rotation period
-    let rotationSpeed = 0.002; // default speed
-
-    if (celestialBody.rotation_period) {
-      // Convert rotation period to speed, handling negative periods (retrograde rotation)
-      rotationSpeed = (1 / Math.abs(celestialBody.rotation_period)) * 0.1;
-      if (celestialBody.rotation_period < 0) {
-        rotationSpeed *= -1; // Reverse rotation for planets like Venus
+      if (celestialBody.rotation_period) {
+        switch (celestialBody.name.toLowerCase()) {
+          case 'sun':
+            // Sun rotates every 27 Earth days - very slow rotation
+            rotationSpeed = (1 / celestialBody.rotation_period) * 0.005 * timeScale;
+            break;
+          case 'mercury':
+            // Mercury: 58.646 Earth days
+            rotationSpeed = (1 / celestialBody.rotation_period) * 0.02 * timeScale;
+            break;
+          case 'venus':
+            // Venus: -243 Earth days (retrograde)
+            rotationSpeed = (1 / Math.abs(celestialBody.rotation_period)) * 0.02 * timeScale;
+            if (celestialBody.rotation_period < 0) rotationSpeed *= -1;
+            break;
+          case 'earth':
+            // Earth: 23.934 hours
+            rotationSpeed = (1 / (celestialBody.rotation_period / 24)) * 0.04 * timeScale;
+            break;
+          case 'mars':
+            // Mars: 24.62 hours
+            rotationSpeed = (1 / (celestialBody.rotation_period / 24)) * 0.04 * timeScale;
+            break;
+          case 'jupiter':
+            // Jupiter: 9.93 hours (fastest rotating planet)
+            rotationSpeed = (1 / (celestialBody.rotation_period / 24)) * 0.06 * timeScale;
+            break;
+          case 'saturn':
+            // Saturn: 10.66 hours
+            rotationSpeed = (1 / (celestialBody.rotation_period / 24)) * 0.06 * timeScale;
+            break;
+          case 'uranus':
+            // Uranus: -17 hours (retrograde)
+            rotationSpeed = (1 / Math.abs(celestialBody.rotation_period / 24)) * 0.04 * timeScale;
+            if (celestialBody.rotation_period < 0) rotationSpeed *= -1;
+            break;
+          case 'neptune':
+            // Neptune: 16.08 hours
+            rotationSpeed = (1 / (celestialBody.rotation_period / 24)) * 0.04 * timeScale;
+            break;
+          case 'pluto':
+            // Pluto: 6.39 Earth days
+            rotationSpeed = (1 / celestialBody.rotation_period) * 0.02 * timeScale;
+            break;
+          default:
+            rotationSpeed = 0.001; // reduced fallback rotation speed
+        }
       }
-    }
 
-    // Rotate the planet directly
-    planet.rotatePlanet(rotationSpeed);
-  });
+      // Rotate the planet directly
+      planet.rotatePlanet(rotationSpeed);
+    });
+  }
 
   // Update controls target
   if (currentFocusIndex >= 0) {
@@ -344,6 +389,42 @@ function updatePlanetPositions() {
       );
     });
   }
+}
+
+function initTimeControls() {
+  const slider = document.getElementById('timeSlider');
+  const timeValue = document.getElementById('timeValue');
+  const pauseButton = document.getElementById('pauseButton');
+
+  // Initialize slider to real-time
+  slider.value = 0;
+  timeScale = 1;
+
+  slider.addEventListener('input', (e) => {
+    const value = parseFloat(e.target.value);
+
+    if (value < 0) {
+      // Slower than real-time
+      timeScale = 1 / Math.pow(10, Math.abs(value));
+    } else {
+      // Real-time or faster
+      timeScale = Math.pow(10, value);
+    }
+
+    // Update display text
+    if (timeScale === 1) {
+      timeValue.textContent = "Real-time";
+    } else if (timeScale > 1) {
+      timeValue.textContent = `${timeScale.toFixed(0)}x faster`;
+    } else {
+      timeValue.textContent = `${(1 / timeScale).toFixed(2)}x slower`;
+    }
+  });
+
+  pauseButton.addEventListener('click', () => {
+    isPaused = !isPaused;
+    pauseButton.textContent = isPaused ? 'Resume' : 'Pause';
+  });
 }
 
 /*
