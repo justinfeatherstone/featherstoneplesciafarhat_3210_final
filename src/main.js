@@ -10,7 +10,7 @@ import { CELESTIAL_BODIES } from './data/celestialBodies.js';
  * Global variables
  */
 let scene, renderer, camera, controls;
-let currentFocusIndex = -1; // -1 means no focus
+let currentFocusIndex = 0; // Initialize to 0 to focus on the Sun initially
 let planetMeshes = []; // Array to store all planet meshes in order
 let isComparisonView = false;
 let ui;
@@ -79,7 +79,7 @@ function init() {
   light.position.set(0, 0, 0);
   scene.add(light);
 
-  //ambient light
+  // Ambient light
   const ambientLight = new THREE.AmbientLight(0xffffff, 0.5);
   scene.add(ambientLight);
 
@@ -97,22 +97,17 @@ function init() {
     planetMeshes.push(planet.mesh);
     scene.add(planet.mesh);
   });
+
+  // Initialize UI with navigation callback before focusing on a planet
+  ui = new UI(CELESTIAL_BODIES, handleNavigate);
+
+  // Focus on the initial planet (Sun) after UI is initialized
   updatePlanetPositions();
   focusOnPlanet(currentFocusIndex);
 
   animate();
   window.addEventListener('keydown', handleKeyPress);
   console.log("Press 'C' to toggle comparison view");
-
-  ui = new UI(CELESTIAL_BODIES);
-
-  // Update UI when focusing on planets
-  window.addEventListener('keydown', (event) => {
-    handleKeyPress(event);
-    if (currentFocusIndex >= 0) {
-      ui.updatePlanetInfo(planetMeshes[currentFocusIndex]);
-    }
-  });
 
   uiShader = new UIShader();
 
@@ -130,6 +125,22 @@ function init() {
       }
     });
   });
+}
+
+/*
+ * Navigation callback for UI arrows
+ * @param {Number} direction - -1 for previous, 1 for next
+ */
+function handleNavigate(direction) {
+  let newIndex;
+  if (direction === -1) {
+    newIndex = currentFocusIndex <= 0 ? planetMeshes.length - 1 : currentFocusIndex - 1;
+  } else if (direction === 1) {
+    newIndex = (currentFocusIndex + 1) % planetMeshes.length;
+  } else {
+    return;
+  }
+  focusOnPlanet(newIndex);
 }
 
 /*
@@ -222,20 +233,22 @@ function focusOnPlanet(index) {
 function handleKeyPress(event) {
   switch (event.key) {
     case 'ArrowRight':
-      focusOnPlanet((currentFocusIndex + 1) % planetMeshes.length);
-      console.log("Planet:", planetMeshes[currentFocusIndex]);
+      handleNavigate(1);
+      console.log("Planet:", planetMeshes[currentFocusIndex].name);
       break;
     case 'ArrowLeft':
       console.log("ArrowLeft");
-      focusOnPlanet(currentFocusIndex <= 0 ?
-        planetMeshes.length - 1 : currentFocusIndex - 1);
+      handleNavigate(-1);
       break;
     case 'Escape':
       // Reset to default view
       currentFocusIndex = -1;
       controls.target.set(0, 0, 0);
-      camera.position.set(0, scale.distance(ASTRONOMICAL_UNIT * 2),
-        scale.distance(ASTRONOMICAL_UNIT * 2));
+      camera.position.set(
+        scale.distance(ASTRONOMICAL_UNIT * 2),
+        scale.distance(ASTRONOMICAL_UNIT * 2),
+        scale.distance(ASTRONOMICAL_UNIT * 2)
+      );
       break;
     case 'c':
     case 'C':

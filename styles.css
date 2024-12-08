@@ -307,4 +307,38 @@
     color: var(--text-primary);
     font-size: 0.9em;
     transition: width 0.5s ease;
-} 
+}
+
+.planet-title {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+}
+
+.nav-arrow {
+    background: rgba(0, 242, 255, 0.05);
+    border: 1px solid rgba(0, 242, 255, 0.3);
+    color: var(--text-secondary);
+    padding: 4px 8px;
+    border-radius: 4px;
+    cursor: pointer;
+    font-size: 0.9em;
+    transition: all 0.3s ease;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+.nav-arrow:hover {
+    background: rgba(0, 242, 255, 0.1);
+    color: var(--text-primary);
+    border-color: var(--neon-blue);
+    box-shadow: 0 0 10px rgba(0, 242, 255, 0.2);
+}
+
+.planet-title h2 {
+    margin: 0;
+    min-width: 120px;
+    text-align: center;
+}
+  

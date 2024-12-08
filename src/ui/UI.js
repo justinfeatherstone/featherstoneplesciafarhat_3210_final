@@ -4,12 +4,14 @@ export class UI {
     /*
      * Constructor
      * @param {Object} planetData - The planet data
+     * @param {Function} onNavigate - Callback for navigating planets
      */
-    constructor(planetData) {
+    constructor(planetData, onNavigate) {
         this.dataManager = new CelestialDataManager(planetData);
         this.planetInfo = document.getElementById('planet-details');
         this.sectionStates = this.loadSectionStates();
         this.defaultCollapsed = ['Quick Facts', 'Atmosphere']; // Sections collapsed by default
+        this.onNavigate = onNavigate; // Store the callback
         this.createInfoPanels();
         this.setupEventListeners();
     }
@@ -82,6 +84,14 @@ export class UI {
                 this.sectionStates[this.currentPlanet] = sectionStates;
                 this.saveSectionStates();
             }
+
+            // Handle planet navigation
+            if (e.target.classList.contains('nav-arrow')) {
+                const direction = e.target.classList.contains('prev') ? -1 : 1;
+                if (this.onNavigate && typeof this.onNavigate === 'function') {
+                    this.onNavigate(direction);
+                }
+            }
         });
 
         document.querySelector('[data-action="reset-sections"]').addEventListener('click', () => {
@@ -104,7 +114,11 @@ export class UI {
         this.planetInfo.innerHTML = `
             <div class="planet-header">
                 <div class="header-top">
-                    <h2>${data.name}</h2>
+                    <div class="planet-title">
+                        <button class="nav-arrow prev" title="Previous Planet (←)">◄</button>
+                        <h2>${data.name}</h2>
+                        <button class="nav-arrow next" title="Next Planet (→)">►</button>
+                    </div>
                     <div class="section-controls">
                         <button class="section-control-btn" data-action="expand-all">Expand All</button>
                         <button class="section-control-btn" data-action="collapse-all">Collapse All</button>
