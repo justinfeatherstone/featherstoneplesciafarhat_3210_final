@@ -83,7 +83,7 @@ function init() {
   controls = cameraSetup.controls;
   
   // Add lighting
-  const ambientLight = new THREE.AmbientLight(0xffffff, 0.1); // Reduced intensity
+  const ambientLight = new THREE.AmbientLight(0xffffff, 0.2); // Slightly increased intensity
   scene.add(ambientLight);
   
   // Initialize planets
@@ -147,10 +147,22 @@ function init() {
   planetMeshes[0].mesh.material = sunMaterial;
 
   // Add point light with adjusted properties
-  const sunLight = new THREE.PointLight(0xffffff, 2, 0, 1);
+  const sunLight = new THREE.PointLight(0xffffff, 2.5, 0);
   sunLight.position.set(0, 0, 0);
   sunLight.color.setHSL(0.1, 0.7, 0.95);
+  sunLight.decay = 0;
+
+  // Get the sun's center position
+  const sunCenter = new THREE.Vector3();
+  planetMeshes[0].mesh.getWorldPosition(sunCenter);
+  sunLight.position.copy(sunCenter);
+
   planetMeshes[0].mesh.add(sunLight);
+
+  // Add a secondary light for better coverage
+  const secondarySunLight = new THREE.DirectionalLight(0xffffff, 0.5);
+  secondarySunLight.position.set(0, 0, 0);
+  scene.add(secondarySunLight);
 
   // Initialize UI with navigation callback before focusing on a planet
   ui = new UI(CELESTIAL_BODIES, handleNavigate);
@@ -288,16 +300,17 @@ function animate() {
     // Update sun shader time uniform
     if (planetMeshes[0] && planetMeshes[0].mesh.material.uniforms) {
         planetMeshes[0].mesh.material.uniforms.time.value += 0.01 * timeScale;
-        
-        // Stabilize lens flare
-        const sunMesh = planetMeshes[0].mesh;
-        const lensflare = sunMesh.children.find(child => child instanceof Lensflare);
-        if (lensflare) {
-            lensflare.position.z = sunMesh.geometry.parameters.radius * 0.1;
-        }
     }
   }
 
+  const sunLight = planetMeshes[0].mesh.children.find(child => child instanceof THREE.PointLight);
+  if (sunLight) {
+    // More subtle pulsing
+    const pulseIntensity = 2.3 + Math.sin(Date.now() * 0.0005) * 0.2;
+    sunLight.intensity = pulseIntensity;
+  }
+
+  updateLights();
   renderer.render(scene, camera);
 }
 
@@ -484,17 +497,39 @@ function addSunFlare() {
     
     const lensflare = new Lensflare();
     
-    // Add main flare with reduced size and adjusted distance
-    const mainFlare = new LensflareElement(textureFlare, 500, 0, new THREE.Color(1, 0.8, 0.5));
+    // Create a single, stronger main flare
+    const mainFlare = new LensflareElement(
+        textureFlare, 
+        600,  // Slightly larger size
+        0,    // Distance from center
+        new THREE.Color(1, 0.8, 0.5)
+    );
     lensflare.addElement(mainFlare);
     
-    // Add more subtle secondary flares with better spacing
-    lensflare.addElement(new LensflareElement(textureFlare, 150, 0.3, new THREE.Color(1, 0.9, 0.6)));
-    lensflare.addElement(new LensflareElement(textureFlare, 100, 0.6, new THREE.Color(1, 0.8, 0.5)));
-    lensflare.addElement(new LensflareElement(textureFlare, 80, 0.9, new THREE.Color(0.9, 0.7, 0.4)));
+    // Add secondary flares with carefully chosen distances
+    lensflare.addElement(new LensflareElement(
+        textureFlare, 
+        120, 
+        0.6,  // Distance from center
+        new THREE.Color(1, 0.9, 0.6)
+    ));
     
-    // Position the flare slightly in front of the sun to prevent z-fighting
-    lensflare.position.z = planetMeshes[0].mesh.geometry.parameters.radius * 0.1;
+    lensflare.addElement(new LensflareElement(
+        textureFlare, 
+        80, 
+        0.9,  // Distance from center
+        new THREE.Color(1, 0.8, 0.5)
+    ));
+    
+    lensflare.addElement(new LensflareElement(
+        textureFlare, 
+        60, 
+        1.2,  // Distance from center
+        new THREE.Color(0.9, 0.7, 0.4)
+    ));
+    
+    // Position the flare at the sun's center
+    lensflare.position.set(0, 0, 0);
     
     planetMeshes[0].mesh.add(lensflare);
 }
@@ -505,21 +540,27 @@ function createSunGlow() {
         color: 0xffaa33,
         transparent: true,
         blending: THREE.AdditiveBlending,
-        opacity: 0.4
+        opacity: 0.3,
+        depthTest: false,  // Prevent z-fighting
+        depthWrite: false  // Prevent z-fighting
     });
 
-    const sprite = new THREE.Sprite(spriteMaterial);
     const sunRadius = planetMeshes[0].mesh.geometry.parameters.radius;
-    sprite.scale.set(sunRadius * 4, sunRadius * 4, 1.0);
     
-    // Create multiple layers of glow
-    const innerGlow = sprite.clone();
-    innerGlow.scale.set(sunRadius * 2.5, sunRadius * 2.5, 1.0);
-    innerGlow.material = spriteMaterial.clone();
-    innerGlow.material.opacity = 0.6;
+    // Create multiple layers with different scales and slightly different positions
+    const layers = [
+        { scale: 4.0, opacity: 0.2, z: 0.1 },
+        { scale: 3.0, opacity: 0.3, z: 0.05 },
+        { scale: 2.5, opacity: 0.4, z: 0 }
+    ];
     
-    planetMeshes[0].mesh.add(sprite);
-    planetMeshes[0].mesh.add(innerGlow);
+    layers.forEach(layer => {
+        const sprite = new THREE.Sprite(spriteMaterial.clone());
+        sprite.scale.set(sunRadius * layer.scale, sunRadius * layer.scale, 1.0);
+        sprite.material.opacity = layer.opacity;
+        sprite.position.z = layer.z;
+        planetMeshes[0].mesh.add(sprite);
+    });
 }
 
 function createSunMaterial(radius) {
@@ -549,58 +590,75 @@ function createSunMaterial(radius) {
             varying vec3 vNormal;
             varying vec2 vUv;
             
-            // Noise functions
-            float random(vec2 st) {
-                return fract(sin(dot(st.xy, vec2(12.9898,78.233))) * 43758.5453123);
-            }
-            
-            float noise(vec2 st) {
-                vec2 i = floor(st);
-                vec2 f = fract(st);
-                
-                float a = random(i);
-                float b = random(i + vec2(1.0, 0.0));
-                float c = random(i + vec2(0.0, 1.0));
-                float d = random(i + vec2(1.0, 1.0));
-                
-                vec2 u = f * f * (3.0 - 2.0 * f);
-                return mix(a, b, u.x) + (c - a)* u.y * (1.0 - u.x) + (d - b) * u.x * u.y;
-            }
-            
             void main() {
                 // Sample the base texture
                 vec4 texColor = texture2D(sunTexture, vUv);
                 
-                // Create dynamic noise pattern
-                float n = noise(vUv * 10.0 + time * 0.5);
-                float n2 = noise(vUv * 20.0 - time * 0.3);
+                // Add pulsing effect
+                float r = 0.95 + 0.05 * sin(vUv.y * 20.0 + time);
                 
-                // Create color variations
-                vec3 color1 = vec3(1.0, 0.6, 0.1); // Bright orange
-                vec3 color2 = vec3(1.0, 0.9, 0.3); // Bright yellow
-                vec3 color3 = vec3(1.0, 0.4, 0.1); // Deep orange
+                // Mix texture with glow effects
+                vec3 color = texColor.rgb * r;
                 
-                // Mix colors based on noise
-                vec3 finalColor = mix(color1, color2, n);
-                finalColor = mix(finalColor, color3, n2 * 0.5);
-                
-                // Add explosive patterns
-                float explosion = noise(vUv * 15.0 + time * 0.8) * 
-                                noise(vUv * 8.0 - time * 0.6);
-                finalColor += vec3(1.0, 0.8, 0.3) * explosion * 0.3;
+                // Add pulsing glow
+                float glow = 0.5 + 0.5 * sin(time * 2.0);
+                color += vec3(0.8, 0.6, 0.3) * glow * 0.3;
                 
                 // Add edge glow
-                float rim = pow(1.0 - dot(vNormal, vec3(0, 0, 1)), 2.0);
-                finalColor += vec3(1.0, 0.6, 0.2) * rim * 0.4;
+                float rim = pow(1.0 - dot(vNormal, vec3(0, 0, 1)), 3.0);
+                color += vec3(1.0, 0.6, 0.3) * rim * 0.5;
                 
-                // Combine with original texture
-                finalColor = mix(finalColor, texColor.rgb, 0.3);
-                
-                gl_FragColor = vec4(finalColor, 1.0);
+                gl_FragColor = vec4(color, 1.0);
             }
         `,
         transparent: true
     });
+}
+
+function updateLights() {
+    if (!planetMeshes[0]) return;
+    
+    const sunCenter = new THREE.Vector3();
+    planetMeshes[0].mesh.getWorldPosition(sunCenter);
+    
+    // Update point light position
+    const sunLight = planetMeshes[0].mesh.children.find(child => child instanceof THREE.PointLight);
+    if (sunLight) {
+        sunLight.position.set(0, 0, 0);
+    }
+    
+    // Update lens flare visibility and intensity
+    const lensflare = planetMeshes[0].mesh.children.find(child => child instanceof Lensflare);
+    if (!lensflare || !lensflare.elements) return;
+    
+    // Calculate angle between camera and sun
+    const dirToCamera = new THREE.Vector3().subVectors(camera.position, sunCenter).normalize();
+    const sunForward = new THREE.Vector3(0, 0, 1).applyQuaternion(planetMeshes[0].mesh.quaternion);
+    const angle = dirToCamera.dot(sunForward);
+    
+    // Adjust flare elements based on viewing angle
+    const visibility = Math.max(0, (angle + 1) / 2); // Convert from [-1,1] to [0,1]
+    
+    // Check if elements array exists and has items
+    if (Array.isArray(lensflare.elements) && lensflare.elements.length > 0) {
+        lensflare.elements.forEach((element, index) => {
+            if (element) {  // Check if element exists
+                if (index === 0) {
+                    // Main flare
+                    element.size = 600 * visibility;
+                } else {
+                    // Secondary flares
+                    element.size = (120 / (index + 1)) * visibility;
+                }
+            }
+        });
+    }
+    
+    // Update directional light
+    const secondarySunLight = scene.children.find(child => child instanceof THREE.DirectionalLight);
+    if (secondarySunLight) {
+        secondarySunLight.position.copy(sunCenter);
+    }
 }
 
 /*
