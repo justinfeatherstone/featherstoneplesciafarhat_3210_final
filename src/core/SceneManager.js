@@ -50,7 +50,8 @@ export class SceneManager {
       CELESTIAL_BODIES,
       (direction) => this.planetManager.handleNavigate(direction),
       this.timeScale,
-      this.isPaused
+      this.isPaused,
+      this.planetManager
     );
     this.uiShader = new UIShader();
   }

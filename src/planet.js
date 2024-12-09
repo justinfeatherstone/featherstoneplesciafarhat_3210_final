@@ -34,7 +34,8 @@ export class Planet {
         ringOuterRadius = null,
         position,
         axialTilt,
-        orbitalElements
+        orbitalElements,
+        
     ) {
         this.name = name;
         this.axialTilt = axialTilt;

@@ -85,6 +85,9 @@ export class AnimationLoop {
     // Update zoom speed
     this.planetManager.updateZoomSpeed();
 
+    // Update Orbit Visibility
+    this.planetManager.updateOrbitVisibility(this.sceneManager.camera.position.distanceTo(this.sceneManager.controls.target));
+
     // Update controls
     this.sceneManager.controls.update();
 

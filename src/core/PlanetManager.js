@@ -67,14 +67,11 @@ export class PlanetManager {
       planet.mesh.name = name.toLowerCase();
       this.planets.push(planet);
       this.sceneManager.scene.add(planet.group);
-      console.log(planet);
-      console.log(data.orbitalElements);
-
+      
       // **Add Orbit Line**
       if (orbitalElements) {
-        const orbit = this.createOrbitPath(orbitalElements, name);
-        console.log("ORBIT", orbit);
-        this.sceneManager.scene.add(orbit);
+        planet.orbitLine = this.createOrbitPath(orbitalElements, name);
+        this.sceneManager.scene.add(planet.orbitLine);
       }
     });
   }
@@ -92,12 +89,13 @@ export class PlanetManager {
       inclination: i,
       longitudeOfAscendingNode: Ω,
       argumentOfPeriapsis: ω,
-      // orbitalPeriod: T, // Not needed for static orbit path
     } = orbitalElements;
 
-    // Number of points to approximate the orbit
-    const segments = 100;
-    const points = [];
+    let segments = 10000;
+    if (planetName.toLowerCase() === "pluto") {
+      segments = 1000000;
+    }
+    let points = [];
 
     for (let t = 0; t <= 2 * Math.PI; t += (2 * Math.PI) / segments) {
       // Solve Kepler's Equation for Eccentric Anomaly (E)
@@ -117,27 +115,63 @@ export class PlanetManager {
       // Distance (r)
       const r = a * (1 - e * Math.cos(E));
 
-      // Heliocentric coordinates in orbital plane
+      // Position in orbital plane
       const x_orb = r * Math.cos(ν);
       const y_orb = r * Math.sin(ν);
       const z_orb = 0;
 
-      // Rotate to ecliptic coordinates
+      // Convert angles to radians
       const inclinationRad = THREE.MathUtils.degToRad(i);
       const longitudeOfAscendingNodeRad = THREE.MathUtils.degToRad(Ω);
       const argumentOfPeriapsisRad = THREE.MathUtils.degToRad(ω);
 
-      // Rotation matrices
+      // Create rotation matrices in correct order
       const rotationMatrix = new THREE.Matrix4();
-      rotationMatrix.makeRotationZ(-argumentOfPeriapsisRad);
-      rotationMatrix.multiply(new THREE.Matrix4().makeRotationX(-inclinationRad));
-      rotationMatrix.multiply(new THREE.Matrix4().makeRotationZ(-longitudeOfAscendingNodeRad));
+      
+      // First rotate around Z-axis by longitude of ascending node
+      rotationMatrix.makeRotationZ(longitudeOfAscendingNodeRad);
+      
+      // Then rotate around X-axis by inclination
+      const inclinationMatrix = new THREE.Matrix4().makeRotationX(inclinationRad);
+      rotationMatrix.multiply(inclinationMatrix);
+      
+      // Finally rotate around Z-axis by argument of periapsis
+      const periapsisMatrix = new THREE.Matrix4().makeRotationZ(argumentOfPeriapsisRad);
+      rotationMatrix.multiply(periapsisMatrix);
 
+      // Apply rotation to position vector
       const position = new THREE.Vector3(x_orb, y_orb, z_orb).applyMatrix4(rotationMatrix);
 
-      // **Scale the position to match scene scale**
+      // Scale the position
       const scaledPosition = this.scale.distanceVector(position);
       points.push(scaledPosition);
+    }
+
+    if (points.length > 2) {
+        // Ensure orbit closure
+        const firstPoint = points[0];
+        const lastPoint = points[points.length - 1];
+        const gap = firstPoint.distanceTo(lastPoint);
+        
+        if (gap > 0.001) {
+            points.push(firstPoint.clone());
+        }
+        
+        // Add intermediate points in areas of high curvature
+        const refinedPoints = [];
+        for (let i = 0; i < points.length - 1; i++) {
+            refinedPoints.push(points[i]);
+            
+            const current = points[i];
+            const next = points[i + 1];
+            const angle = current.angleTo(next);
+            
+            if (angle > 0.1) {
+                const mid = new THREE.Vector3().addVectors(current, next).multiplyScalar(0.5);
+                refinedPoints.push(mid);
+            }
+        }
+        points = refinedPoints;
     }
 
     const orbitGeometry = new THREE.BufferGeometry().setFromPoints(points);
@@ -259,5 +293,52 @@ export class PlanetManager {
       // Default zoom speed for solar system view
       this.sceneManager.controls.zoomSpeed = 1.0;
     }
+  }
+
+  calculateSegments(orbitalElements, planetName) {
+    const { eccentricity, semiMajorAxis } = orbitalElements;
+    
+    // Base segments proportional to orbit size and eccentricity
+    let segments = Math.floor(10000 * (1 + eccentricity * 5));
+    
+    // Additional segments for highly eccentric orbits
+    if (eccentricity > 0.1) {
+        segments *= 2;
+    }
+    
+    // Special cases for outer planets
+    switch (planetName.toLowerCase()) {
+        case 'pluto':
+            segments = Math.max(segments, 1000000);
+            break;
+        case 'neptune':
+        case 'uranus':
+            segments = Math.max(segments, 50000);
+            break;
+    }
+    
+    return segments;
+  }
+
+  /*
+   * Update the orbit visibility based on the camera distance
+   * @param {Number} cameraDistance - The distance to the camera
+   */
+  updateOrbitVisibility(cameraDistance) {
+    this.planets.forEach((planet, index) => {
+        if (!planet.orbitLine) return;
+
+        // Set full opacity for all orbits
+        let opacity = 1.0;
+
+        // If a planet is focused, adjust its orbit opacity
+        if (this.currentFocusIndex === index) {
+            const planetRadius = planet.mesh.geometry.parameters.radius;
+            const fadeDistance = planetRadius * 100;
+            opacity = Math.max(0, 1 - (fadeDistance / cameraDistance));
+        }
+
+        planet.orbitLine.material.opacity = opacity;
+    });
   }
 }

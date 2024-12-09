@@ -6,8 +6,9 @@ export class UI {
      * @param {Object} planetData - The planet data
      * @param {Function} onNavigate - Callback for navigating planets
      */
-    constructor(planetData, onNavigate, timeScale, isPaused) {
+    constructor(planetData, onNavigate, timeScale, isPaused, planetManager) {
         this.dataManager = new CelestialDataManager(planetData);
+        this.planetManager = planetManager; // Store reference to PlanetManager
         this.planetInfo = document.getElementById('planet-details');
         this.sectionStates = this.loadSectionStates();
         this.defaultCollapsed = ['Quick Facts', 'Atmosphere']; // Sections collapsed by default
@@ -17,6 +18,7 @@ export class UI {
         this.createInfoPanels();
         this.setupEventListeners();
         this.initTimeControls(timeScale, isPaused);
+        this.createOrbitControls(planetManager.planets); // Initialize orbit controls
     }
 
     initTimeControls(timeScale, isPaused) {
@@ -295,5 +297,26 @@ export class UI {
                 }
             });
         });
+    }
+
+    createOrbitControls(planets) {
+        const orbitControlsContainer = document.getElementById('orbit-controls');
+        orbitControlsContainer.innerHTML = ''; // Clear existing controls
+
+        planets.forEach((planet, index) => {
+            const button = document.createElement('button');
+            button.textContent = `Toggle ${planet.name} Orbit`;
+            button.dataset.index = index;
+            button.classList.add('orbit-toggle-btn');
+            button.addEventListener('click', () => this.toggleOrbitVisibility(index));
+            orbitControlsContainer.appendChild(button);
+        });
+    }
+
+    toggleOrbitVisibility(index) {
+        const planet = this.planetManager.planets[index];
+        if (planet.orbitLine) {
+            planet.orbitLine.visible = !planet.orbitLine.visible;
+        }
     }
 }
