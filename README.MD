@@ -70,8 +70,9 @@ npm install
 ```
 
 4. Pull LFS files (if they weren't downloaded during clone):
-
 ```
+git lfs install
+
 git lfs pull
 ```
 
@@ -83,6 +84,9 @@ npx vite
 
 6. Open the browser and navigate to `http://localhost:5173` or follow the instructions in the terminal to view the project.
 
+```
+http://localhost:5173
+```
 
 ## Resources
 
