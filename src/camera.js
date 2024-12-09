@@ -13,15 +13,33 @@ export function createCamera(renderer, scale) {
         75,
         window.innerWidth / window.innerHeight,
         0.0001,
-        scale.distance(ASTRONOMICAL_UNIT * 50)
+        scale.distance(ASTRONOMICAL_UNIT * 100)
     );
 
     const controls = new OrbitControls(camera, renderer.domElement);
+    
+    // Enable smooth controls
     controls.enableDamping = true;
     controls.dampingFactor = 0.05;
-    controls.minDistance = 0.0001;
-    controls.maxDistance = scale.distance(ASTRONOMICAL_UNIT * 40);
-    controls.enableZoom = true;
     
+    // Allow rotation
+    controls.enableRotate = true;
+    controls.rotateSpeed = 0.5;
+    
+    // Configure zoom
+    controls.enableZoom = true;
+    controls.zoomSpeed = 1.0;
+    controls.minDistance = 0.0001;
+    controls.maxDistance = scale.distance(ASTRONOMICAL_UNIT * 90);
+    
+    // Optional: Add smooth zoom
+    controls.smoothZoom = true;
+    controls.smoothZoomSpeed = 5.0;
+    
+    // Enable panning but with constraints
+    controls.enablePan = true;
+    controls.panSpeed = 0.5;
+    controls.screenSpacePanning = true;
+
     return { camera, controls };
 }

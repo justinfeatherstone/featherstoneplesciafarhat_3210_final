@@ -1,6 +1,7 @@
 import { Planet } from "../planet.js";
 import { CELESTIAL_BODIES } from "../data/celestialBodies.js";
 import { scale } from "./Utils.js";
+import * as THREE from 'three';
 
 export class PlanetManager {
   constructor(scale, sceneManager, scene) {
@@ -21,6 +22,7 @@ export class PlanetManager {
       let ringInnerRadius = null;
       let ringOuterRadius = null;
       let nightTexturePath = null;
+      let orbitalElements = null;
 
       if (name.toLowerCase() === "earth") {
         normalMapPath = data.normalMap;
@@ -37,19 +39,16 @@ export class PlanetManager {
         ringOuterRadius = scale.size(data.ringOuterRadius); // Define in kilometers
       }
 
-      // Validation: Check if ring properties are defined if ringMapPath is provided
-      if (ringMapPath && (!data.ringInnerRadius || !data.ringOuterRadius)) {
-        console.error(
-          `Ring properties missing for ${name}. Rings will not be created.`
-        );
-        ringMapPath = null;
-        ringInnerRadius = null;
-        ringOuterRadius = null;
+      // Assign orbitalElements if available
+      if (data.orbitalElements) {
+        orbitalElements = data.orbitalElements;
+      } else {
+        console.warn(`Orbital elements missing for ${name}. Planet motion will be static.`);
       }
 
-      // Create Planet instance with the name
+      // Create Planet instance with orbital elements
       const planet = new Planet(
-        name, // Pass the name
+        name,
         scale.size(data.diameter / 2),
         data.texture,
         nightTexturePath, // Pass the night texture path
@@ -61,14 +60,128 @@ export class PlanetManager {
         ringInnerRadius, // Added ringInnerRadius
         ringOuterRadius, // Added ringOuterRadius
         [scale.distance(data.distance), 0, 0],
-        data.axialTilt || 0
+        data.axialTilt || 0,
+        orbitalElements // exclude sun
       );
       planet.mesh.name = name.toLowerCase();
       this.planets.push(planet);
-      console.log(this.sceneManager);
       this.sceneManager.scene.add(planet.group);
       console.log(planet);
+      console.log(data.orbitalElements);
+
+      // **Add Orbit Line**
+      if (orbitalElements) {
+        const orbit = this.createOrbitPath(orbitalElements, name);
+        console.log("ORBIT", orbit);
+        this.sceneManager.scene.add(orbit);
+      }
     });
+  }
+
+  /**
+   * Enhanced createOrbitPath with color differentiation.
+   * @param {Object} orbitalElements - Keplerian orbital elements.
+   * @param {String} planetName - Name of the planet for color selection.
+   * @returns {THREE.Line} - The orbit line object.
+   */
+  createOrbitPath(orbitalElements, planetName) {
+    const {
+      semiMajorAxis: a,
+      eccentricity: e,
+      inclination: i,
+      longitudeOfAscendingNode: Ω,
+      argumentOfPeriapsis: ω,
+      // orbitalPeriod: T, // Not needed for static orbit path
+    } = orbitalElements;
+
+    // Number of points to approximate the orbit
+    const segments = 100;
+    const points = [];
+
+    for (let t = 0; t <= 2 * Math.PI; t += (2 * Math.PI) / segments) {
+      // Solve Kepler's Equation for Eccentric Anomaly (E)
+      let E = t;
+      let deltaE;
+      do {
+        deltaE = (t - (E - e * Math.sin(E))) / (1 - e * Math.cos(E));
+        E += deltaE;
+      } while (Math.abs(deltaE) > 1e-6);
+
+      // True Anomaly (ν)
+      const ν = 2 * Math.atan2(
+        Math.sqrt(1 + e) * Math.sin(E / 2),
+        Math.sqrt(1 - e) * Math.cos(E / 2)
+      );
+
+      // Distance (r)
+      const r = a * (1 - e * Math.cos(E));
+
+      // Heliocentric coordinates in orbital plane
+      const x_orb = r * Math.cos(ν);
+      const y_orb = r * Math.sin(ν);
+      const z_orb = 0;
+
+      // Rotate to ecliptic coordinates
+      const inclinationRad = THREE.MathUtils.degToRad(i);
+      const longitudeOfAscendingNodeRad = THREE.MathUtils.degToRad(Ω);
+      const argumentOfPeriapsisRad = THREE.MathUtils.degToRad(ω);
+
+      // Rotation matrices
+      const rotationMatrix = new THREE.Matrix4();
+      rotationMatrix.makeRotationZ(-argumentOfPeriapsisRad);
+      rotationMatrix.multiply(new THREE.Matrix4().makeRotationX(-inclinationRad));
+      rotationMatrix.multiply(new THREE.Matrix4().makeRotationZ(-longitudeOfAscendingNodeRad));
+
+      const position = new THREE.Vector3(x_orb, y_orb, z_orb).applyMatrix4(rotationMatrix);
+
+      // **Scale the position to match scene scale**
+      const scaledPosition = this.scale.distanceVector(position);
+      points.push(scaledPosition);
+    }
+
+    const orbitGeometry = new THREE.BufferGeometry().setFromPoints(points);
+
+    // Define colors based on planet categories
+    let color = 0xffffff; // Default white
+
+    switch (planetName.toLowerCase()) {
+      case 'mercury':
+        color = 0xaaaaaa; // Grey
+        break;
+      case 'venus':
+        color = 0xffaa00; // Orange
+        break;
+      case 'earth':
+        color = 0x0000ff; // Blue
+        break;
+      case 'mars':
+        color = 0xff0000; // Red
+        break;
+      case 'jupiter':
+        color = 0xffa500; // Orange
+        break;
+      case 'saturn':
+        color = 0xffd700; // Gold
+        break;
+      case 'uranus':
+        color = 0x40e0d0; // Turquoise
+        break;
+      case 'neptune':
+        color = 0x0000ff; // Blue
+        break;
+      case 'pluto':
+        color = 0x8a2be2; // BlueViolet
+        break;
+      default:
+        color = 0xffffff; // White
+    }
+
+    const orbitMaterial = new THREE.LineBasicMaterial({ color, transparent: true, opacity: 0.5 });
+    
+    // **Use THREE.Line instead of THREE.LineLoop for elliptical orbits**
+    const orbitLine = new THREE.Line(orbitGeometry, orbitMaterial);
+
+    return orbitLine;
   }
 
   /*
@@ -81,7 +194,7 @@ export class PlanetManager {
     this.currentFocusIndex = index;
     const targetPlanet = this.planets[index];
 
-    // Reset controls target to planet position
+    // Update controls target to planet's current position
     this.sceneManager.controls.target.copy(targetPlanet.group.position);
 
     // Calculate appropriate viewing distance based on planet size
@@ -99,19 +212,16 @@ export class PlanetManager {
       viewDistance = planetRadius * 15;
     }
 
-    // Calculate camera position with offset
-    const offsetRatio = 0.5;
-    const offset = new THREE.Vector3(
-      viewDistance * offsetRatio,
-      viewDistance * offsetRatio,
-      viewDistance
-    );
+    // Define a consistent camera offset
+    const cameraOffset = new THREE.Vector3(0, 0, viewDistance);
 
-    // Set camera position relative to planet
-    this.sceneManager.camera.position.copy(targetPlanet.group.position).add(offset);
+    // Set camera position relative to planet's current position
+    this.sceneManager.camera.position.copy(targetPlanet.group.position).add(cameraOffset);
+
+    // **Ensure Camera Follows the Planet**
+    // The AnimationLoop now handles continuous camera updates
 
     // Update camera and controls
-    this.sceneManager.camera.lookAt(targetPlanet.group.position);
     this.sceneManager.controls.update();
 
     // Update UI

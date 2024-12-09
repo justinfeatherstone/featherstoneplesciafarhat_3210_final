@@ -33,7 +33,8 @@ export class Planet {
         ringInnerRadius = null,
         ringOuterRadius = null,
         position,
-        axialTilt
+        axialTilt,
+        orbitalElements
     ) {
         this.name = name;
         this.axialTilt = axialTilt;
@@ -225,6 +226,9 @@ export class Planet {
 
             this.mesh.add(this.rings); // Add rings as a child of the planet mesh
         }
+
+        this.orbitalElements = orbitalElements;
+        this.orbitalPosition = new THREE.Vector3();
     }
 
     /*
@@ -443,5 +447,72 @@ export class Planet {
             // Rotate clouds around the planet's Y-axis
             this.clouds.rotation.y += 0.01;
         }
+    }
+
+    /*
+     * Calculate the planet's position based on Keplerian orbital elements
+     * @param {Number} timeElapsed - Elapsed time in days
+     */
+    calculateOrbitalPosition(timeElapsed) {
+        const {
+            semiMajorAxis: a,
+            eccentricity: e,
+            inclination: i,
+            longitudeOfAscendingNode: Ω,
+            argumentOfPeriapsis: ω,
+            orbitalPeriod: T,
+            meanAnomalyAtEpoch: M0,
+        } = this.orbitalElements;
+
+        // Convert angles from degrees to radians
+        const inclination = THREE.MathUtils.degToRad(i);
+        const longitudeOfAscendingNode = THREE.MathUtils.degToRad(Ω);
+        const argumentOfPeriapsis = THREE.MathUtils.degToRad(ω);
+        const meanAnomalyAtEpoch = THREE.MathUtils.degToRad(M0);
+
+        // Calculate mean anomaly (M)
+        const meanMotion = (2 * Math.PI) / T; // Mean motion (rad/day)
+        const M = meanMotion * timeElapsed + meanAnomalyAtEpoch;
+
+        // Solve Kepler's Equation for Eccentric Anomaly (E)
+        let E = M;
+        let deltaE;
+        do {
+            deltaE = (M - (E - e * Math.sin(E))) / (1 - e * Math.cos(E));
+            E += deltaE;
+        } while (Math.abs(deltaE) > 1e-6);
+
+        // True Anomaly (ν)
+        const ν = 2 * Math.atan2(
+            Math.sqrt(1 + e) * Math.sin(E / 2),
+            Math.sqrt(1 - e) * Math.cos(E / 2)
+        );
+
+        // Distance (r)
+        const r = a * (1 - e * Math.cos(E));
+
+        // Heliocentric coordinates in orbital plane
+        const x_orb = r * Math.cos(ν);
+        const y_orb = r * Math.sin(ν);
+
+        // Rotation matrices for orbital elements
+        const cosΩ = Math.cos(longitudeOfAscendingNode);
+        const sinΩ = Math.sin(longitudeOfAscendingNode);
+        const cosi = Math.cos(inclination);
+        const sini = Math.sin(inclination);
+        const cosω = Math.cos(argumentOfPeriapsis);
+        const sinω = Math.sin(argumentOfPeriapsis);
+
+        // Position in ecliptic coordinates
+        const x_ecl =
+            (cosΩ * cosω - sinΩ * sinω * cosi) * x_orb +
+            (-cosΩ * sinω - sinΩ * cosω * cosi) * y_orb;
+        const y_ecl =
+            (sinΩ * cosω + cosΩ * sinω * cosi) * x_orb +
+            (-sinΩ * sinω + cosΩ * cosω * cosi) * y_orb;
+        const z_ecl = (sinω * sini) * x_orb + (cosω * sini) * y_orb;
+
+        // Update the orbital position vector
+        this.orbitalPosition.set(x_ecl, y_ecl, z_ecl);
     }
 }

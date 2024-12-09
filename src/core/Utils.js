@@ -18,6 +18,9 @@ export const scale = {
     }
     return scaled;
   },
+  distanceVector(vector) {
+    return vector.clone().multiplyScalar(1 / SCALE_FACTOR);
+  },
 };
 
 // Other utility functions if needed
