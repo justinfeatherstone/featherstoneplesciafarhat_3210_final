@@ -108,6 +108,7 @@ export const CELESTIAL_BODIES = {
             "Has a single moon"
         ],
         texture: "static/textures/earth/8k_earth_daymap.jpg",
+        nightTexture: "static/textures/earth/8k_earth_nightmap.jpg",
         normalMap: "static/textures/earth/8k_earth_normal_map.jpg",
         bumpMap: "static/textures/earth/1k_earth_bump_map.jpg",
         specularMap: "static/textures/earth/8k_earth_specular_map.jpg",

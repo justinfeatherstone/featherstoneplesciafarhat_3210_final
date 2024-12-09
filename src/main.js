@@ -95,12 +95,14 @@ function init() {
     let ringMapPath = null;
     let ringInnerRadius = null;
     let ringOuterRadius = null;
+    let nightTexturePath = null;
 
     if (name.toLowerCase() === 'earth') {
       normalMapPath = data.normalMap;
       specularMapPath = data.specularMap;
       cloudsMapPath = data.cloudMap;
       bumpMapPath = data.bumpMap;
+      nightTexturePath = data.nightTexture;
     }
 
     // Define ring properties for Saturn and Uranus
@@ -126,6 +128,7 @@ function init() {
       name, // Pass the name
       scale.size(data.diameter / 2),
       data.texture,
+      nightTexturePath,       // Pass the night texture path
       name.toLowerCase() === 'earth' ? data.normalMap : null,
       name.toLowerCase() === 'earth' ? data.specularMap : null,
       name.toLowerCase() === 'earth' ? data.bumpMap : null,
@@ -311,6 +314,24 @@ function animate() {
   }
 
   updateLights();
+
+  // Update the light direction and camera position for Earth's shader material
+  const earthPlanet = planetMeshes.find(planet => planet.name.toLowerCase() === 'earth');
+  if (earthPlanet && earthPlanet.mesh.material.uniforms) {
+    const sunPlanet = planetMeshes.find(planet => planet.name.toLowerCase() === 'sun');
+    if (sunPlanet) {
+      const sunPosition = new THREE.Vector3();
+      sunPlanet.mesh.getWorldPosition(sunPosition);
+
+      const earthPosition = new THREE.Vector3();
+      earthPlanet.mesh.getWorldPosition(earthPosition);
+
+      const lightDirection = new THREE.Vector3().subVectors(sunPosition, earthPosition).normalize();
+      earthPlanet.mesh.material.uniforms.lightDirection.value.copy(lightDirection);
+    }
+
+  }
+
   renderer.render(scene, camera);
 }
 

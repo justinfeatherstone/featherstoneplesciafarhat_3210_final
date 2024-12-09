@@ -8,7 +8,8 @@ export class Planet {
      * Constructor
      * @param {String} name - The name of the planet
      * @param {Number} size - The size
-     * @param {String} texturePath - The texture path
+     * @param {String} texturePath - The day texture path
+     * @param {String} nightTexturePath - The night texture path (optional)
      * @param {String} normalMapPath - The normal map path
      * @param {String} specularMapPath - The specular map path
      * @param {String} bumpMapPath - The bump map path
@@ -23,6 +24,7 @@ export class Planet {
         name,
         size,
         texturePath,
+        nightTexturePath = null,
         normalMapPath,
         specularMapPath,
         bumpMapPath,
@@ -45,16 +47,27 @@ export class Planet {
         // Load textures with proper settings
         const textureLoader = new THREE.TextureLoader();
 
-        // Base color texture
-        const texture = textureLoader.load(
+        // Load the day texture
+        const dayTexture = textureLoader.load(
             texturePath,
-            () => console.log(`Loaded texture for ${name}`),
+            () => console.log(`Loaded day texture for ${name}`),
             undefined,
-            (err) => console.error(`Error loading texture for ${name}:`, err)
+            (err) => console.error(`Error loading day texture for ${name}:`, err)
         );
-        texture.encoding = THREE.sRGBEncoding;
+        dayTexture.encoding = THREE.sRGBEncoding;
 
-        // Normal map
+        // Load the night texture if provided
+        const nightTexture = nightTexturePath
+            ? textureLoader.load(
+                  nightTexturePath,
+                  () => console.log(`Loaded night texture for ${name}`),
+                  undefined,
+                  (err) => console.error(`Error loading night texture for ${name}:`, err)
+              )
+            : null;
+        if (nightTexture) nightTexture.encoding = THREE.sRGBEncoding;
+
+        // Load other maps
         const normalMap = normalMapPath
             ? textureLoader.load(
                   normalMapPath,
@@ -65,7 +78,6 @@ export class Planet {
             : null;
         if (normalMap) normalMap.encoding = THREE.LinearEncoding;
 
-        // Specular map
         const specularMap = specularMapPath
             ? textureLoader.load(
                   specularMapPath,
@@ -76,7 +88,6 @@ export class Planet {
             : null;
         if (specularMap) specularMap.encoding = THREE.LinearEncoding;
 
-        // Bump map
         const bumpMap = bumpMapPath
             ? textureLoader.load(
                   bumpMapPath,
@@ -87,35 +98,36 @@ export class Planet {
             : null;
         if (bumpMap) bumpMap.encoding = THREE.LinearEncoding;
 
-        // Define material properties
-        const materialOptions = {
-            normalMap: normalMap,
-            map: texture,
-            normalScale: new THREE.Vector2(2, 2), // Increased normal map effect
-            bumpMap: bumpMap,
-            bumpScale: 0.02,
-            specularMap: specularMap,
-            specular: new THREE.Color(0x333333),
-            shininess: 25,
-            side: THREE.FrontSide,
-        };
+        // For Earth, if we have both day and night textures, use a custom shader material
+        if (name.toLowerCase() === 'earth' && nightTexture) {
+            this.mesh = new THREE.Mesh(
+                geometry,
+                this.createEarthMaterial(dayTexture, nightTexture, specularMap, normalMap)
+            );
+        } else {
+            // Use standard material for other planets
+            const materialOptions = {
+                map: dayTexture,
+                normalMap: normalMap,
+                normalScale: new THREE.Vector2(2, 2),
+                bumpMap: bumpMap,
+                bumpScale: 0.02,
+                specularMap: specularMap,
+                specular: new THREE.Color(0x333333),
+                shininess: 25,
+                side: THREE.FrontSide,
+            };
 
-        // Create mesh with MeshPhongMaterial
-        this.mesh = new THREE.Mesh(
-            geometry,
-            new THREE.MeshPhongMaterial(materialOptions)
-        );
+            this.mesh = new THREE.Mesh(
+                geometry,
+                new THREE.MeshPhongMaterial(materialOptions)
+            );
+        }
 
-        // Set up proper rotation order
+        // Set up proper rotation order and axial tilt
         this.mesh.rotation.order = 'ZYX';
-
-        // First rotate to align poles with Y-axis
         this.mesh.rotation.x = THREE.MathUtils.degToRad(0);
-
-        // Then apply axial tilt around Z-axis
         this.mesh.rotation.z = THREE.MathUtils.degToRad(-this.axialTilt);
-
-
 
         // Add mesh to group
         this.group.add(this.mesh);
@@ -209,6 +221,84 @@ export class Planet {
 
             this.mesh.add(this.rings); // Add rings as a child of the planet mesh
         }
+    }
+
+    /*
+     * Create custom shader material for Earth
+     * @param {THREE.Texture} dayTexture - The day texture
+     * @param {THREE.Texture} nightTexture - The night texture
+     * @param {THREE.Texture} specularMap - The specular map
+     * @param {THREE.Texture} normalMap - The normal map
+     * @returns {THREE.ShaderMaterial} - The shader material
+     */
+    createEarthMaterial(dayTexture, nightTexture, specularMap, normalMap) {
+        return new THREE.ShaderMaterial({
+            uniforms: {
+                dayTexture: { value: dayTexture },
+                nightTexture: { value: nightTexture },
+                specularMap: { value: specularMap },
+                normalMap: { value: normalMap },
+                lightDirection: { value: new THREE.Vector3() },
+            },
+            vertexShader: `
+                precision highp float;
+
+                varying vec2 vUv;
+                varying vec3 vNormal;
+                varying vec3 vPosition;
+
+                void main() {
+                    vUv = uv;
+                    vNormal = normalize(normalMatrix * normal);
+                    vPosition = (modelMatrix * vec4(position, 1.0)).xyz;
+
+                    gl_Position = projectionMatrix * viewMatrix * vec4(vPosition, 1.0);
+                }
+            `,
+            fragmentShader: `
+                precision highp float;
+
+                uniform sampler2D dayTexture;
+                uniform sampler2D nightTexture;
+                uniform sampler2D specularMap;
+                uniform sampler2D normalMap;
+                uniform vec3 lightDirection;
+
+                varying vec2 vUv;
+                varying vec3 vNormal;
+                varying vec3 vPosition;
+
+                void main() {
+                    // Normalize interpolated normal
+                    vec3 normal = normalize(vNormal);
+
+                    // Compute the direction to the light source
+                    vec3 lightDir = normalize(lightDirection);
+
+                    // Compute diffuse lighting
+                    float dotNL = max(dot(normal, lightDir), 0.0);
+
+                    // Sample textures
+                    vec3 dayColor = texture2D(dayTexture, vUv).rgb;
+                    vec3 nightColor = texture2D(nightTexture, vUv).rgb;
+                    vec3 specularColor = texture2D(specularMap, vUv).rgb;
+
+                    // Blend between day and night textures based on illumination
+                    vec3 color = mix(nightColor, dayColor, dotNL);
+
+                    // Add specular highlights
+                    vec3 viewDir = normalize(cameraPosition - vPosition);
+                    vec3 reflectDir = reflect(-lightDir, normal);
+                    float spec = pow(max(dot(viewDir, reflectDir), 0.0), 16.0);
+                    vec3 specular = specularColor * spec;
+
+                    color += specular;
+
+                    gl_FragColor = vec4(color, 1.0);
+                }
+            `,
+            transparent: false,
+        });
     }
 
     rotatePlanet(speed) {
