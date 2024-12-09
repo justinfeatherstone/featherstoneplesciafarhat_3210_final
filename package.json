@@ -1,0 +1,13 @@
+{
+  "name": "featherstoneplesciafarhat_3210_final",
+  "version": "1.0.0",
+  "dependencies": {
+    "three": "^10.8.3"
+  },
+  "devDependencies": {
+    "vite": "^6.0.3"
+  },
+  "gitLfs": {
+    "enabled": true
+  }
+}
