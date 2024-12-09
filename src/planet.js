@@ -18,6 +18,7 @@ export class Planet {
      * @param {Number} ringOuterRadius - Outer radius of the ring (optional)
      * @param {Array} position - The position
      * @param {Object} scale - The scale
+     * @param {Number} axialTilt - The axial tilt angle
      */
     constructor(
         name, // Added name parameter
@@ -31,10 +32,15 @@ export class Planet {
         ringInnerRadius = null,
         ringOuterRadius = null,
         position,
-        scale
+        scale,
+        axialTilt
     ) {
         this.name = name; // Store the name for reference
+        this.axialTilt = axialTilt;
 
+        // Create a group to hold the planet and apply tilt to everything
+        this.group = new THREE.Group();
+        
         // Validate size
         if (isNaN(size) || size <= 0) {
             console.error(`Invalid planet size for ${name}: ${size}`);
@@ -140,11 +146,30 @@ export class Planet {
             const ringGeometry = new THREE.RingGeometry(
                 ringInnerRadius,
                 ringOuterRadius,
-                128, // Increased segments for smoothness
-                16,  // Increased segments for smoothness
-                0,
-                Math.PI * 2
+                128, // Segments around the ring
+                4    // Radial segments
             );
+
+            // Modify UVs to wrap the texture correctly
+            const pos = ringGeometry.attributes.position;
+            const uv = ringGeometry.attributes.uv;
+            const v3 = new THREE.Vector3();
+
+            for (let i = 0; i < pos.count; i++) {
+                v3.fromBufferAttribute(pos, i);
+                
+                // Calculate angle and normalize to 0-1 range
+                const angle = Math.atan2(v3.y, v3.x);
+                let u = angle / (Math.PI * 2);
+                if (u < 0) u += 1; // Ensure u is in 0-1 range
+                
+                // Calculate normalized radius for v coordinate
+                const radius = v3.length();
+                const v = (radius - ringInnerRadius) / (ringOuterRadius - ringInnerRadius);
+                
+                // Rotate UVs by 90 degrees by swapping and adjusting coordinates
+                uv.setXY(i, v, u);
+            }
 
             const ringTexture = textureLoader.load(
                 ringMapPath,
@@ -152,48 +177,56 @@ export class Planet {
                 undefined,
                 (err) => console.error(`Error loading ring texture for ${name}:`, err)
             );
+
             ringTexture.encoding = THREE.sRGBEncoding;
             ringTexture.wrapS = THREE.RepeatWrapping;
             ringTexture.wrapT = THREE.RepeatWrapping;
 
-            // Use MeshPhongMaterial for lighting effects
             const ringMaterial = new THREE.MeshPhongMaterial({
                 map: ringTexture,
                 side: THREE.DoubleSide,
                 transparent: true,
-                opacity: 0.8,
-                alphaTest: 0.5,
-                blending: THREE.NormalBlending,
+                opacity: 1.0,
+                alphaTest: 0.1,
+                blending: THREE.AdditiveBlending,
                 depthWrite: false,
             });
 
             this.rings = new THREE.Mesh(ringGeometry, ringMaterial);
 
-            // Rotate the ring based on the planet's name
+            // Apply proper rotation based on planet
             if (name.toLowerCase() === 'saturn') {
-                // Rotate Saturn's rings to lie flat on the equatorial plane
-                this.rings.rotation.x = -Math.PI / 2;
+                this.rings.rotation.x = Math.PI / 2;
+                ringMaterial.opacity = 0.9;
             } else if (name.toLowerCase() === 'uranus') {
-                // Rotate Uranus's rings to be tilted at 90 degrees
-                this.rings.rotation.y = Math.PI / 2;
+                this.rings.rotation.x = Math.PI / 2;
+                ringMaterial.opacity = 0.8;
             }
 
-            // Ensure no scaling is initially applied
-            this.rings.scale.set(1, 1, 1);
-
             this.mesh.add(this.rings);
-            console.log(`Added rings to ${name}`);
         }
+        
+        this.applyAxialTilt();
+
+        // Add mesh to group instead of directly using it
+        this.group.add(this.mesh);
+    }
+
+    applyAxialTilt() {
+        // Convert degrees to radians and apply tilt
+        const tiltRadians = THREE.MathUtils.degToRad(this.axialTilt);
+        this.group.rotation.z = tiltRadians;
+    }
+
+    rotatePlanet(speed) {
+        // Rotate around the tilted axis
+        this.mesh.rotation.y += speed;
     }
 
     rotateRings() {
         if (this.rings) {
             this.rings.rotation.y += 0.01;
         }
-    }
-
-    rotatePlanet() {
-        this.mesh.rotation.y += 0.01;
     }
 
     rotateClouds() {
