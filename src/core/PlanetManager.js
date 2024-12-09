@@ -10,6 +10,7 @@ export class PlanetManager {
     this.scene = scene;
     this.planets = []; // Store instances of Planet
     this.currentFocusIndex = -1;
+    this.currentViewDistance = null; // Add this line to store view distance
   }
 
   initPlanets() {
@@ -194,37 +195,33 @@ export class PlanetManager {
     this.currentFocusIndex = index;
     const targetPlanet = this.planets[index];
 
-    // Update controls target to planet's current position
-    this.sceneManager.controls.target.copy(targetPlanet.group.position);
-
     // Calculate appropriate viewing distance based on planet size
     const planetRadius = targetPlanet.mesh.geometry.parameters.radius;
-    let viewDistance;
-
+    
     if (targetPlanet.mesh.name === "sun") {
-      viewDistance = planetRadius * 5;
+        this.currentViewDistance = planetRadius * 5;
     } else if (["jupiter", "saturn"].includes(targetPlanet.mesh.name)) {
-      viewDistance = planetRadius * 8;
+        this.currentViewDistance = planetRadius * 8;
     } else if (["uranus", "neptune"].includes(targetPlanet.mesh.name)) {
-      viewDistance = planetRadius * 12;
+        this.currentViewDistance = planetRadius * 12;
     } else {
-      // Smaller planets (Mercury, Venus, Earth, Mars)
-      viewDistance = planetRadius * 15;
+        this.currentViewDistance = planetRadius * 15;
     }
 
-    // Define a consistent camera offset
-    const cameraOffset = new THREE.Vector3(0, 0, viewDistance);
+    // Set initial camera position with an offset
+    const cameraOffset = new THREE.Vector3(
+        this.currentViewDistance * 0.5,  // Some X offset for perspective
+        this.currentViewDistance * 0.3,  // Some Y offset for elevation
+        this.currentViewDistance         // Z distance
+    );
 
-    // Set camera position relative to planet's current position
+    // Update controls target to planet's position
+    this.sceneManager.controls.target.copy(targetPlanet.group.position);
+    
+    // Position camera relative to planet
     this.sceneManager.camera.position.copy(targetPlanet.group.position).add(cameraOffset);
-
-    // **Ensure Camera Follows the Planet**
-    // The AnimationLoop now handles continuous camera updates
-
-    // Update camera and controls
+    
     this.sceneManager.controls.update();
-
-    // Update UI
     this.sceneManager.ui.updatePlanetInfo(targetPlanet.mesh);
   }
 

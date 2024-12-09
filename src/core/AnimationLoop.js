@@ -61,10 +61,19 @@ export class AnimationLoop {
         const targetPlanet = this.planetManager.planets[this.planetManager.currentFocusIndex];
         const planetPosition = targetPlanet.group.position;
 
-        // Update only the target position, not the camera position
+        // Get the current camera-to-target vector
+        const cameraToTarget = new THREE.Vector3().subVectors(
+            this.sceneManager.camera.position,
+            this.sceneManager.controls.target
+        );
+
+        // Update the target to the planet's new position
         this.sceneManager.controls.target.copy(planetPosition);
         
-        // Let OrbitControls handle the camera position naturally
+        // Move the camera by the same offset to maintain relative position
+        this.sceneManager.camera.position.copy(planetPosition).add(cameraToTarget);
+        
+        // Let OrbitControls handle rotation and zoom
         this.sceneManager.controls.update();
     }
 
