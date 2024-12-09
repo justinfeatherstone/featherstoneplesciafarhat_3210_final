@@ -144,7 +144,7 @@ export class Planet {
 
         // Add clouds if cloudsMapPath is provided
         if (cloudsMapPath) {
-            const cloudsGeometry = new THREE.SphereGeometry(size * 1.01, 64, 64); // Slightly larger to prevent z-fighting
+            const cloudsGeometry = new THREE.SphereGeometry(size * 1.02, 64, 64); // Slightly larger to prevent z-fighting
             const cloudsMaterial = new THREE.MeshPhongMaterial({
                 map: textureLoader.load(
                     cloudsMapPath,
@@ -249,7 +249,7 @@ export class Planet {
 
                 void main() {
                     vUv = uv;
-                    vNormal = normalize(normalMatrix * normal);
+                    vNormal = normalize(mat3(modelMatrix) * normal);
                     vPosition = (modelMatrix * vec4(position, 1.0)).xyz;
 
                     gl_Position = projectionMatrix * viewMatrix * vec4(vPosition, 1.0);
