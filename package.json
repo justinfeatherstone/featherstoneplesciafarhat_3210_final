@@ -2,6 +2,7 @@
   "name": "featherstoneplesciafarhat_3210_final",
   "version": "1.0.0",
   "dependencies": {
+    "featherstoneplesciafarhat_3210_final": "file:",
     "three": "^0.171.0"
   },
   "devDependencies": {

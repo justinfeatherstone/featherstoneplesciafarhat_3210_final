@@ -6,15 +6,54 @@ export class UI {
      * @param {Object} planetData - The planet data
      * @param {Function} onNavigate - Callback for navigating planets
      */
-    constructor(planetData, onNavigate) {
+    constructor(planetData, onNavigate, timeScale, isPaused) {
         this.dataManager = new CelestialDataManager(planetData);
         this.planetInfo = document.getElementById('planet-details');
         this.sectionStates = this.loadSectionStates();
         this.defaultCollapsed = ['Quick Facts', 'Atmosphere']; // Sections collapsed by default
         this.onNavigate = onNavigate; // Store the callback
+        this.timeScale = timeScale;
+        this.isPaused = isPaused;
         this.createInfoPanels();
         this.setupEventListeners();
+        this.initTimeControls(timeScale, isPaused);
     }
+
+    initTimeControls(timeScale, isPaused) {
+        const slider = document.getElementById("timeSlider");
+        const timeValue = document.getElementById("timeValue");
+        const pauseButton = document.getElementById("pauseButton");
+      
+        // Initialize slider to real-time
+        slider.value = 0;
+        this.timeScale.value = 1;
+      
+        slider.addEventListener("input", (e) => {
+          const value = parseFloat(e.target.value);
+      
+          if (value < 0) {
+            // Slower than real-time
+            this.timeScale.value = 1 / Math.pow(10, Math.abs(value));
+          } else {
+            // Real-time or faster
+            this.timeScale.value = Math.pow(10, value);
+          }
+      
+          // Update display text
+          if (this.timeScale.value === 1) {
+            timeValue.textContent = "Real-time";
+          } else if (this.timeScale.value > 1) {
+            timeValue.textContent = `${this.timeScale.value.toFixed(0)}x faster`;
+          } else {
+            timeValue.textContent = `${(1 / this.timeScale.value).toFixed(2)}x slower`;
+          }
+        });
+      
+        pauseButton.addEventListener("click", () => {
+          this.isPaused.value = !this.isPaused.value;
+          pauseButton.textContent = this.isPaused.value ? "Resume" : "Pause";
+        });
+      }
 
     loadSectionStates() {
         const saved = localStorage.getItem('planetSectionStates');

@@ -1,5 +1,5 @@
 import * as THREE from 'three';
-
+import { CELESTIAL_BODIES } from './data/celestialBodies.js';
 /*
  * Planet class
  */
@@ -118,7 +118,14 @@ export class Planet {
                 geometry,
                 this.createEarthMaterial(dayTexture, nightTexture, specularMap, normalMap, cloudsMap)
             );
-        } else {
+        } 
+        else if (name.toLowerCase() === 'sun') {
+            this.mesh = new THREE.Mesh(
+                geometry,
+                this.createSunMaterial(size)
+            );
+        }
+        else {
             // Use standard material for other planets
             const materialOptions = {
                 map: dayTexture,
@@ -359,6 +366,58 @@ export class Planet {
             depthWrite: true,
         });
     }
+
+    createSunMaterial(radius) {
+        const textureLoader = new THREE.TextureLoader();
+        const sunTexture = textureLoader.load(CELESTIAL_BODIES.sun.texture);
+      
+        return new THREE.ShaderMaterial({
+          uniforms: {
+            time: { value: 0 },
+            radius: { value: radius },
+            sunTexture: { value: sunTexture },
+          },
+          vertexShader: `
+                  varying vec3 vNormal;
+                  varying vec2 vUv;
+                  
+                  void main() {
+                      vNormal = normalize(normalMatrix * normal);
+                      vUv = uv;
+                      gl_Position = projectionMatrix * modelViewMatrix * vec4(position, 1.0);
+                  }
+              `,
+          fragmentShader: `
+                  uniform float time;
+                  uniform float radius;
+                  uniform sampler2D sunTexture;
+                  varying vec3 vNormal;
+                  varying vec2 vUv;
+                  
+                  void main() {
+                      // Sample the base texture
+                      vec4 texColor = texture2D(sunTexture, vUv);
+                      
+                      // Add pulsing effect
+                      float r = 0.95 + 0.05 * sin(vUv.y * 20.0 + time);
+                      
+                      // Mix texture with glow effects
+                      vec3 color = texColor.rgb * r;
+                      
+                      // Add pulsing glow
+                      float glow = 0.5 + 0.5 * sin(time * 2.0);
+                      color += vec3(0.8, 0.6, 0.3) * glow * 0.3;
+                      
+                      // Add edge glow
+                      float rim = pow(1.0 - dot(vNormal, vec3(0, 0, 1)), 3.0);
+                      color += vec3(1.0, 0.6, 0.3) * rim * 0.5;
+                      
+                      gl_FragColor = vec4(color, 1.0);
+                  }
+              `,
+          transparent: true,
+        });
+      }
 
     rotatePlanet(speed) {
         // Create the rotation quaternion
