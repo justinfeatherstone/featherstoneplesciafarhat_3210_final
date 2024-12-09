@@ -25,7 +25,8 @@ export const CELESTIAL_BODIES = {
             "Core temperature is about 15 million °C",
             "Surface has intense magnetic fields"
         ],
-        texture: "static/textures/8k_sun.jpg"
+        texture: "static/textures/8k_sun.jpg",
+        axialTilt: 7.25,  // degrees
     },
     mercury: {
         name: "Mercury",
@@ -50,7 +51,8 @@ export const CELESTIAL_BODIES = {
             "Most cratered planet in the solar system",
             "Has ice in permanently shadowed craters"
         ],
-        texture: "static/textures/8k_mercury.jpg"
+        texture: "static/textures/8k_mercury.jpg",
+        axialTilt: 0.034,  // degrees
     },
     venus: {
         name: "Venus",
@@ -78,7 +80,8 @@ export const CELESTIAL_BODIES = {
             "Hottest planet despite not being closest to Sun",
             "Surface pressure is 92 times Earth's"
         ],
-        texture: "static/textures/venus/8k_venus_surface.jpg"
+        texture: "static/textures/venus/8k_venus_surface.jpg",
+        axialTilt: 177.4,  // degrees (retrograde)
     },
     earth: {
         name: "Earth",
@@ -104,7 +107,13 @@ export const CELESTIAL_BODIES = {
             "Only planet known to support life",
             "Has a single moon"
         ],
-        texture: "static/textures/earth/8k_earth_daymap.jpg"
+        texture: "static/textures/earth/8k_earth_daymap.jpg",
+        nightTexture: "static/textures/earth/8k_earth_nightmap.jpg",
+        normalMap: "static/textures/earth/8k_earth_normal_map.jpg",
+        bumpMap: "static/textures/earth/1k_earth_bump_map.jpg",
+        specularMap: "static/textures/earth/8k_earth_specular_map.jpg",
+        cloudMap: "static/textures/earth/8k_earth_clouds.jpg",
+        axialTilt: 23.44,  // degrees
     },
     mars: {
         name: "Mars",
@@ -127,7 +136,8 @@ export const CELESTIAL_BODIES = {
         facts: [
             "Red planet with a thin atmosphere"
         ],
-        texture: "static/textures/8k_mars.jpg"
+        texture: "static/textures/8k_mars.jpg",
+        axialTilt: 25.19,  // degrees
     },
     jupiter: {
         name: "Jupiter",
@@ -152,7 +162,8 @@ export const CELESTIAL_BODIES = {
             "Has a strong magnetic field",
             "Has 79 known moons"
         ],
-        texture: "static/textures/8k_jupiter.jpg"
+        texture: "static/textures/8k_jupiter.jpg",
+        axialTilt: 3.13,  // degrees
     },
     saturn: {
         name: "Saturn",
@@ -176,7 +187,11 @@ export const CELESTIAL_BODIES = {
             "Second largest planet in the solar system",
             "Has a prominent ring system"
         ],
-        texture: "static/textures/saturn/8k_saturn.jpg"
+        texture: "static/textures/saturn/8k_saturn.jpg",
+        ringMap: "static/textures/saturn/8k_saturn_ring_alpha.png",
+        ringInnerRadius: 1.0 * (116460 / 2),
+        ringOuterRadius: 2.0 * (116460 / 2),
+        axialTilt: 26.73,  // degrees
     },
     uranus: {
         name: "Uranus",
@@ -199,7 +214,11 @@ export const CELESTIAL_BODIES = {
         facts: [
             "Largest planet with a magnetic field primarily in the equatorial plane"
         ],
-        texture: "static/textures/2k_uranus.jpg"
+        texture: "static/textures/uranus/2k_uranus.jpg",
+        ringMap: "static/textures/uranus/uranus_rings_alpha.png",
+        ringInnerRadius: 1.64 * (50724 / 2),
+        ringOuterRadius: 2.0 * (50724 / 2),
+        axialTilt: 97.77,  // degrees
     },
     neptune: {
         name: "Neptune",
@@ -222,7 +241,8 @@ export const CELESTIAL_BODIES = {
         facts: [
             "Neptune is the eighth and farthest known planet from the Sun in the Solar System"
         ],
-        texture: "static/textures/2k_neptune.jpg"
+        texture: "static/textures/2k_neptune.jpg",
+        axialTilt: 28.32,  // degrees
     },
     pluto: {
         name: "Pluto",
@@ -245,6 +265,7 @@ export const CELESTIAL_BODIES = {
             "Discovered by Clyde Tombaugh in 1930",
             "Not classified as a planet by the IAU :("
         ],
-        texture: "static/textures/pluto/2k_pluto.jpg"
+        texture: "static/textures/pluto/2k_pluto.jpg",
+        axialTilt: 122.53,  // degrees
     }
 };
