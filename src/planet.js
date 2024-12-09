@@ -17,11 +17,10 @@ export class Planet {
      * @param {Number} ringInnerRadius - Inner radius of the ring (optional)
      * @param {Number} ringOuterRadius - Outer radius of the ring (optional)
      * @param {Array} position - The position
-     * @param {Object} scale - The scale
      * @param {Number} axialTilt - The axial tilt angle
      */
     constructor(
-        name, // Added name parameter
+        name,
         size,
         texturePath,
         normalMapPath,
@@ -32,27 +31,20 @@ export class Planet {
         ringInnerRadius = null,
         ringOuterRadius = null,
         position,
-        scale,
         axialTilt
     ) {
-        this.name = name; // Store the name for reference
+        this.name = name;
         this.axialTilt = axialTilt;
 
-        // Create a group to hold the planet and apply tilt to everything
+        // Create a group to hold the planet
         this.group = new THREE.Group();
-        
-        // Validate size
-        if (isNaN(size) || size <= 0) {
-            console.error(`Invalid planet size for ${name}: ${size}`);
-            size = 0.01; // fallback size
-        }
 
         // Create geometry with validated size
         const geometry = new THREE.SphereGeometry(size, 64, 64);
 
         // Load textures with proper settings
         const textureLoader = new THREE.TextureLoader();
-        
+
         // Base color texture
         const texture = textureLoader.load(
             texturePath,
@@ -61,32 +53,38 @@ export class Planet {
             (err) => console.error(`Error loading texture for ${name}:`, err)
         );
         texture.encoding = THREE.sRGBEncoding;
-        
+
         // Normal map
-        const normalMap = normalMapPath ? textureLoader.load(
-            normalMapPath,
-            () => console.log(`Loaded normal map for ${name}`),
-            undefined,
-            (err) => console.error(`Error loading normal map for ${name}:`, err)
-        ) : null;
+        const normalMap = normalMapPath
+            ? textureLoader.load(
+                  normalMapPath,
+                  () => console.log(`Loaded normal map for ${name}`),
+                  undefined,
+                  (err) => console.error(`Error loading normal map for ${name}:`, err)
+              )
+            : null;
         if (normalMap) normalMap.encoding = THREE.LinearEncoding;
-        
+
         // Specular map
-        const specularMap = specularMapPath ? textureLoader.load(
-            specularMapPath,
-            () => console.log(`Loaded specular map for ${name}`),
-            undefined,
-            (err) => console.error(`Error loading specular map for ${name}:`, err)
-        ) : null;
+        const specularMap = specularMapPath
+            ? textureLoader.load(
+                  specularMapPath,
+                  () => console.log(`Loaded specular map for ${name}`),
+                  undefined,
+                  (err) => console.error(`Error loading specular map for ${name}:`, err)
+              )
+            : null;
         if (specularMap) specularMap.encoding = THREE.LinearEncoding;
-        
+
         // Bump map
-        const bumpMap = bumpMapPath ? textureLoader.load(
-            bumpMapPath,
-            () => console.log(`Loaded bump map for ${name}`),
-            undefined,
-            (err) => console.error(`Error loading bump map for ${name}:`, err)
-        ) : null;
+        const bumpMap = bumpMapPath
+            ? textureLoader.load(
+                  bumpMapPath,
+                  () => console.log(`Loaded bump map for ${name}`),
+                  undefined,
+                  (err) => console.error(`Error loading bump map for ${name}:`, err)
+              )
+            : null;
         if (bumpMap) bumpMap.encoding = THREE.LinearEncoding;
 
         // Define material properties
@@ -99,7 +97,7 @@ export class Planet {
             specularMap: specularMap,
             specular: new THREE.Color(0x333333),
             shininess: 25,
-            side: THREE.FrontSide
+            side: THREE.FrontSide,
         };
 
         // Create mesh with MeshPhongMaterial
@@ -108,16 +106,29 @@ export class Planet {
             new THREE.MeshPhongMaterial(materialOptions)
         );
 
-        // Validate position
-        const validPosition = position.map(coord => {
+        // Set up proper rotation order
+        this.mesh.rotation.order = 'ZYX';
+
+        // First rotate to align poles with Y-axis
+        this.mesh.rotation.x = THREE.MathUtils.degToRad(0);
+
+        // Then apply axial tilt around Z-axis
+        this.mesh.rotation.z = THREE.MathUtils.degToRad(-this.axialTilt);
+
+
+
+        // Add mesh to group
+        this.group.add(this.mesh);
+
+        // Set position on the group
+        const validPosition = position.map((coord) => {
             if (isNaN(coord)) {
                 console.error(`Invalid position coordinate for ${name}: ${coord}`);
-                return 0; // fallback position
+                return 0;
             }
             return coord;
         });
-
-        this.mesh.position.set(...validPosition);
+        this.group.position.set(...validPosition);
 
         // Add clouds if cloudsMapPath is provided
         if (cloudsMapPath) {
@@ -130,24 +141,24 @@ export class Planet {
                     (err) => console.error(`Error loading clouds map for ${name}:`, err)
                 ),
                 transparent: true,
-                opacity: 0.5
+                opacity: 0.5,
             });
             this.clouds = new THREE.Mesh(cloudsGeometry, cloudsMaterial);
-            this.mesh.add(this.clouds);
+            this.mesh.add(this.clouds); // Add clouds as a child of the planet mesh
         }
 
         // Add rings if ringMapPath is provided
         if (ringMapPath && ringInnerRadius && ringOuterRadius) {
             console.log(`Creating rings for ${name} with dimensions:`, {
                 inner: ringInnerRadius,
-                outer: ringOuterRadius
+                outer: ringOuterRadius,
             });
 
             const ringGeometry = new THREE.RingGeometry(
                 ringInnerRadius,
                 ringOuterRadius,
                 128, // Segments around the ring
-                4    // Radial segments
+                4 // Radial segments
             );
 
             // Modify UVs to wrap the texture correctly
@@ -177,7 +188,6 @@ export class Planet {
                 undefined,
                 (err) => console.error(`Error loading ring texture for ${name}:`, err)
             );
-
             ringTexture.encoding = THREE.sRGBEncoding;
             ringTexture.wrapS = THREE.RepeatWrapping;
             ringTexture.wrapT = THREE.RepeatWrapping;
@@ -194,43 +204,35 @@ export class Planet {
 
             this.rings = new THREE.Mesh(ringGeometry, ringMaterial);
 
-            // Apply proper rotation based on planet
-            if (name.toLowerCase() === 'saturn') {
-                this.rings.rotation.x = Math.PI / 2;
-                ringMaterial.opacity = 0.9;
-            } else if (name.toLowerCase() === 'uranus') {
-                this.rings.rotation.x = Math.PI / 2;
-                ringMaterial.opacity = 0.8;
-            }
+            // Rotate the rings to align with the planet's equatorial plane
+            this.rings.rotation.x = Math.PI / 2;
 
-            this.mesh.add(this.rings);
+            this.mesh.add(this.rings); // Add rings as a child of the planet mesh
         }
-        
-        this.applyAxialTilt();
-
-        // Add mesh to group instead of directly using it
-        this.group.add(this.mesh);
-    }
-
-    applyAxialTilt() {
-        // Convert degrees to radians and apply tilt
-        const tiltRadians = THREE.MathUtils.degToRad(this.axialTilt);
-        this.group.rotation.z = tiltRadians;
     }
 
     rotatePlanet(speed) {
-        // Rotate around the tilted axis
-        this.mesh.rotation.y += speed;
-    }
-
-    rotateRings() {
-        if (this.rings) {
-            this.rings.rotation.y += 0.01;
-        }
+        // Create the rotation quaternion
+        const quaternion = new THREE.Quaternion();
+        
+        // Calculate the tilted rotation axis
+        const axis = new THREE.Vector3(
+            Math.sin(THREE.MathUtils.degToRad(this.axialTilt)), // X component
+            Math.cos(THREE.MathUtils.degToRad(this.axialTilt)), // Y component
+            0  // Z component
+        );
+        axis.normalize();
+        
+        // Create the rotation around the tilted axis
+        quaternion.setFromAxisAngle(axis, speed);
+        
+        // Apply the rotation to the mesh
+        this.mesh.quaternion.premultiply(quaternion);
     }
 
     rotateClouds() {
         if (this.clouds) {
+            // Rotate clouds around the planet's Y-axis
             this.clouds.rotation.y += 0.01;
         }
     }

@@ -137,11 +137,11 @@ function init() {
       ringInnerRadius,      // Added ringInnerRadius
       ringOuterRadius,      // Added ringOuterRadius
       [scale.distance(data.distance), 0, 0],
-      scale
+      data.axialTilt || 0
     );
     planet.mesh.name = name.toLowerCase();
     planetMeshes.push(planet);
-    scene.add(planet.mesh);
+    scene.add(planet.group);
   });
 
   // Initialize UI with navigation callback before focusing on a planet
@@ -259,7 +259,7 @@ function animate() {
 
   // Update controls target
   if (currentFocusIndex >= 0) {
-    const target = planetMeshes[currentFocusIndex].mesh;
+    const target = planetMeshes[currentFocusIndex].group;
     controls.target.copy(target.position);
   }
 
@@ -290,20 +290,20 @@ function focusOnPlanet(index) {
   if (index < 0 || index >= planetMeshes.length) return;
 
   currentFocusIndex = index;
-  const targetPlanet = planetMeshes[index].mesh;
+  const targetPlanet = planetMeshes[index];
 
   // Reset controls target to planet position
-  controls.target.copy(targetPlanet.position);
+  controls.target.copy(targetPlanet.group.position);
 
   // Calculate appropriate viewing distance based on planet size
-  const planetRadius = targetPlanet.geometry.parameters.radius;
+  const planetRadius = targetPlanet.mesh.geometry.parameters.radius;
   let viewDistance;
 
-  if (targetPlanet.name === 'sun') {
+  if (targetPlanet.mesh.name === 'sun') {
     viewDistance = planetRadius * 5;
-  } else if (['jupiter', 'saturn'].includes(targetPlanet.name)) {
+  } else if (['jupiter', 'saturn'].includes(targetPlanet.mesh.name)) {
     viewDistance = planetRadius * 8;
-  } else if (['uranus', 'neptune'].includes(targetPlanet.name)) {
+  } else if (['uranus', 'neptune'].includes(targetPlanet.mesh.name)) {
     viewDistance = planetRadius * 12;
   } else {
     // Smaller planets (Mercury, Venus, Earth, Mars)
@@ -319,16 +319,16 @@ function focusOnPlanet(index) {
   );
 
   // Set camera position relative to planet
-  camera.position.copy(targetPlanet.position).add(offset);
+  camera.position.copy(targetPlanet.group.position).add(offset);
 
   // Update camera and controls
-  camera.lookAt(targetPlanet.position);
+  camera.lookAt(targetPlanet.group.position);
   controls.update();
 
   // Update UI
-  ui.updatePlanetInfo(targetPlanet);
+  ui.updatePlanetInfo(targetPlanet.mesh);
   // Log info for debugging
-  console.log(`Focused on ${targetPlanet.name}`);
+  console.log(`Focused on ${targetPlanet.mesh.name}`);
   console.log(`Planet radius: ${planetRadius}`);
   console.log(`View distance: ${viewDistance}`);
 }
@@ -396,16 +396,16 @@ function updatePlanetPositions() {
   if (isComparisonView) {
     // Place planets side by side with small gaps
     let currentX = 0;
-    planetMeshes.forEach((planetMesh) => {
-      const radius = planetMesh.geometry.parameters.radius;
-      currentX += radius; // Start at edge of previous planet
-      planetMesh.mesh.position.set(currentX, 0, 0);
-      currentX += radius + scale.size(1000000); // Add gap between planets
+    planetMeshes.forEach((planet) => {
+      const radius = planet.mesh.geometry.parameters.radius;
+      currentX += radius;
+      planet.group.position.set(currentX, 0, 0);
+      currentX += radius + scale.size(1000000);
     });
   } else {
     // Reset to original orbital positions
     Object.entries(CELESTIAL_BODIES).forEach(([name, data], index) => {
-      planetMeshes[index].mesh.position.set(
+      planetMeshes[index].group.position.set(
         scale.distance(data.distance),
         0,
         0
