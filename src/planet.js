@@ -98,11 +98,25 @@ export class Planet {
             : null;
         if (bumpMap) bumpMap.encoding = THREE.LinearEncoding;
 
+        // Load the clouds map if provided
+        const cloudsMap = cloudsMapPath
+            ? textureLoader.load(
+                cloudsMapPath,
+                () => console.log(`Loaded clouds map for ${name}`),
+                undefined,
+                (err) => console.error(`Error loading clouds map for ${name}:`, err)
+            )
+            : null;
+
+        if (cloudsMap) {
+            cloudsMap.encoding = THREE.sRGBEncoding;
+        }
+
         // For Earth, if we have both day and night textures, use a custom shader material
         if (name.toLowerCase() === 'earth' && nightTexture) {
             this.mesh = new THREE.Mesh(
                 geometry,
-                this.createEarthMaterial(dayTexture, nightTexture, specularMap, normalMap)
+                this.createEarthMaterial(dayTexture, nightTexture, specularMap, normalMap, cloudsMap)
             );
         } else {
             // Use standard material for other planets
@@ -141,23 +155,6 @@ export class Planet {
             return coord;
         });
         this.group.position.set(...validPosition);
-
-        // Add clouds if cloudsMapPath is provided
-        if (cloudsMapPath) {
-            const cloudsGeometry = new THREE.SphereGeometry(size * 1.02, 64, 64); // Slightly larger to prevent z-fighting
-            const cloudsMaterial = new THREE.MeshPhongMaterial({
-                map: textureLoader.load(
-                    cloudsMapPath,
-                    () => console.log(`Loaded clouds map for ${name}`),
-                    undefined,
-                    (err) => console.error(`Error loading clouds map for ${name}:`, err)
-                ),
-                transparent: true,
-                opacity: 0.5,
-            });
-            this.clouds = new THREE.Mesh(cloudsGeometry, cloudsMaterial);
-            this.mesh.add(this.clouds); // Add clouds as a child of the planet mesh
-        }
 
         // Add rings if ringMapPath is provided
         if (ringMapPath && ringInnerRadius && ringOuterRadius) {
@@ -229,16 +226,22 @@ export class Planet {
      * @param {THREE.Texture} nightTexture - The night texture
      * @param {THREE.Texture} specularMap - The specular map
      * @param {THREE.Texture} normalMap - The normal map
+     * @param {THREE.Texture} cloudsMap - The clouds map
      * @returns {THREE.ShaderMaterial} - The shader material
      */
-    createEarthMaterial(dayTexture, nightTexture, specularMap, normalMap) {
+    createEarthMaterial(dayTexture, nightTexture, specularMap, normalMap, cloudsMap) {
         return new THREE.ShaderMaterial({
             uniforms: {
                 dayTexture: { value: dayTexture },
                 nightTexture: { value: nightTexture },
                 specularMap: { value: specularMap },
                 normalMap: { value: normalMap },
+                cloudsMap: { value: cloudsMap },
                 lightDirection: { value: new THREE.Vector3() },
+                time: { value: 0.0 },
+                cloudRotationSpeed: { value: 0.1 },
+                specularIntensity: { value: 0.5 },
+                axialTilt: { value: THREE.MathUtils.degToRad(this.axialTilt || 0) },
             },
             vertexShader: `
                 precision highp float;
@@ -262,11 +265,23 @@ export class Planet {
                 uniform sampler2D nightTexture;
                 uniform sampler2D specularMap;
                 uniform sampler2D normalMap;
+                uniform sampler2D cloudsMap;
                 uniform vec3 lightDirection;
+                uniform float time;
+                uniform float cloudRotationSpeed;
+                uniform float specularIntensity;
+                uniform float axialTilt;
 
                 varying vec2 vUv;
                 varying vec3 vNormal;
                 varying vec3 vPosition;
+
+                // Function to apply rotation around an arbitrary axis
+                vec3 rotateAroundAxis(vec3 position, vec3 axis, float angle) {
+                    float cosAngle = cos(angle);
+                    float sinAngle = sin(angle);
+                    return position * cosAngle + cross(axis, position) * sinAngle + axis * dot(axis, position) * (1.0 - cosAngle);
+                }
 
                 void main() {
                     // Normalize interpolated normal
@@ -286,11 +301,54 @@ export class Planet {
                     // Blend between day and night textures based on illumination
                     vec3 color = mix(nightColor, dayColor, dotNL);
 
-                    // Add specular highlights
+                    // Rotate cloud UV coordinates with axial tilt
+                    float angle = time * cloudRotationSpeed;
+
+                    // Convert vUv to 3D sphere coordinates
+                    float theta = vUv.y * 3.1415926; // Latitudinal angle
+                    float phi = vUv.x * 2.0 * 3.1415926; // Longitudinal angle
+
+                    vec3 spherePosition = vec3(
+                        sin(theta) * cos(phi),
+                        sin(theta) * sin(phi),
+                        cos(theta)
+                    );
+
+                    // Define the rotation axis accounting for axial tilt
+                    vec3 tiltAxis = vec3(0.0, sin(axialTilt), cos(axialTilt));
+
+                    // Rotate the point around the tilted axis
+                    vec3 rotatedPosition = rotateAroundAxis(spherePosition, tiltAxis, angle);
+
+                    // Convert back to spherical coordinates
+                    float newTheta = acos(rotatedPosition.z);
+                    float newPhi = atan(rotatedPosition.y, rotatedPosition.x);
+
+                    // Convert back to UV coordinates
+                    vec2 rotatedUV = vec2(newPhi / (2.0 * 3.1415926), newTheta / 3.1415926);
+
+                    // Ensure UVs are in [0,1] range
+                    rotatedUV = fract(rotatedUV);
+
+                    // Sample rotated clouds
+                    vec4 rotatedCloudsColor = texture2D(cloudsMap, rotatedUV);
+
+                    // Adjust cloud opacity based on illumination, limiting max opacity to 0.7
+                    float maxCloudOpacity = 0.7;
+                    float baseCloudOpacity = 0.2;
+                    float cloudOpacity = mix(baseCloudOpacity, min(rotatedCloudsColor.a, maxCloudOpacity), dotNL);
+
+                    // Calculate cloud contribution
+                    vec3 cloudContribution = rotatedCloudsColor.rgb * cloudOpacity;
+
+                    // Blend clouds additively to brighten the base color
+                    color += cloudContribution;
+
+                    // Add specular highlights with reduced intensity
                     vec3 viewDir = normalize(cameraPosition - vPosition);
                     vec3 reflectDir = reflect(-lightDir, normal);
                     float spec = pow(max(dot(viewDir, reflectDir), 0.0), 16.0);
-                    vec3 specular = specularColor * spec;
+                    vec3 specular = specularColor * spec * specularIntensity;
 
                     color += specular;
 
@@ -298,6 +356,7 @@ export class Planet {
                 }
             `,
             transparent: false,
+            depthWrite: true,
         });
     }
 
