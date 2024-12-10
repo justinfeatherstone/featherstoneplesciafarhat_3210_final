@@ -4,6 +4,7 @@ import { CELESTIAL_BODIES } from "../data/celestialBodies.js";
 import { ASTRONOMICAL_UNIT } from "../constants.js";
 import { UI } from "../ui/UI.js";
 import { UIShader } from "../ui/UIShader.js";
+import { scale } from "./Utils.js";
 
 export class SceneManager {
   constructor(timeScale, isPaused) {
@@ -16,6 +17,7 @@ export class SceneManager {
     this.ui = null;
     this.uiShader = null;
     this.planetManager = null;
+    this.scale = scale;
   }
 
   initRenderer() {
@@ -81,5 +83,36 @@ export class SceneManager {
 
   setPlanetManager(planetManager) {
     this.planetManager = planetManager;
+  }
+
+  initHelpers() {
+    // Axes Helper
+    const axesHelper = new THREE.AxesHelper(this.scale.distance(200000000)); // 200 million km for solar system scale
+    axesHelper.name = 'axesHelper';
+    this.scene.add(axesHelper);
+
+    // Grid Helper
+    const size = this.scale.distance(500000000); // 500 million km grid
+    const divisions = 50;
+    const gridHelper = new THREE.GridHelper(size, divisions);
+    gridHelper.name = 'gridHelper';
+    gridHelper.rotation.x = Math.PI / 2; // Rotate to match ecliptic plane
+    this.scene.add(gridHelper);
+
+    // Polar Grid Helper
+    const polarGridHelper = new THREE.PolarGridHelper(size / 2, 16, 8, 64);
+    polarGridHelper.name = 'polarGridHelper';
+    this.scene.add(polarGridHelper);
+  }
+
+  toggleHelpers(showHelpers) {
+    const helpers = ['axesHelper', 'gridHelper', 'polarGridHelper'];
+    
+    helpers.forEach(helperName => {
+        const helper = this.scene.getObjectByName(helperName);
+        if (helper) {
+            helper.visible = showHelpers;
+        }
+    });
   }
 }

@@ -127,7 +127,7 @@ export class PlanetManager {
 
       // Create rotation matrices in correct order
       const rotationMatrix = new THREE.Matrix4();
-      
+
       // First rotate around Z-axis by longitude of ascending node
       rotationMatrix.makeRotationZ(longitudeOfAscendingNodeRad);
       
@@ -144,6 +144,11 @@ export class PlanetManager {
 
       // Scale the position
       const scaledPosition = this.scale.distanceVector(position);
+
+      // Rotate the entire system around X-axis by 90 degrees
+      const systemRotation = new THREE.Matrix4().makeRotationX(Math.PI / 2);
+      scaledPosition.applyMatrix4(systemRotation);
+
       points.push(scaledPosition);
     }
 

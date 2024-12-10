@@ -496,24 +496,22 @@ export class Planet {
         const x_orb = r * Math.cos(ν);
         const y_orb = r * Math.sin(ν);
 
-        // Rotation matrices for orbital elements
-        const cosΩ = Math.cos(longitudeOfAscendingNode);
-        const sinΩ = Math.sin(longitudeOfAscendingNode);
-        const cosi = Math.cos(inclination);
-        const sini = Math.sin(inclination);
-        const cosω = Math.cos(argumentOfPeriapsis);
-        const sinω = Math.sin(argumentOfPeriapsis);
+        // Create rotation matrices in correct order
+        const rotationMatrix = new THREE.Matrix4();
 
-        // Position in ecliptic coordinates
-        const x_ecl =
-            (cosΩ * cosω - sinΩ * sinω * cosi) * x_orb +
-            (-cosΩ * sinω - sinΩ * cosω * cosi) * y_orb;
-        const y_ecl =
-            (sinΩ * cosω + cosΩ * sinω * cosi) * x_orb +
-            (-sinΩ * sinω + cosΩ * cosω * cosi) * y_orb;
-        const z_ecl = (sinω * sini) * x_orb + (cosω * sini) * y_orb;
+        // Then apply the orbital element rotations
+        rotationMatrix.multiply(new THREE.Matrix4().makeRotationZ(longitudeOfAscendingNode));
+        rotationMatrix.multiply(new THREE.Matrix4().makeRotationX(inclination));
+        rotationMatrix.multiply(new THREE.Matrix4().makeRotationZ(argumentOfPeriapsis));
+        
 
-        // Update the orbital position vector
-        this.orbitalPosition.set(x_ecl, y_ecl, z_ecl);
+        // Apply rotation to position vector
+        const position = new THREE.Vector3(x_orb, y_orb, 0).applyMatrix4(rotationMatrix);
+
+        // Rotate the entire system around X-axis by 90 degrees
+        const systemRotation = new THREE.Matrix4().makeRotationX(Math.PI / 2);
+        position.applyMatrix4(systemRotation);
+
+        this.orbitalPosition.copy(position);
     }
 }
