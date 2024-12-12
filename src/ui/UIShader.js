@@ -1,19 +1,19 @@
-import * as THREE from 'three';
+import * as THREE from "three";
 
-/*
+/**
  * UI shader class
- */
+ **/
 export class UIShader {
-    /*
-     * Constructor
-     */
-    constructor() {
-        this.clock = new THREE.Clock();
-        this.scene = new THREE.Scene();
-        this.camera = new THREE.OrthographicCamera(-1, 1, 1, -1, 0, 1);
-        
-        // Future: install vite-glsl-loader and use import statements
-        const vertexShader = `
+  /**
+   * Constructor
+   **/
+  constructor() {
+    this.clock = new THREE.Clock();
+    this.scene = new THREE.Scene();
+    this.camera = new THREE.OrthographicCamera(-1, 1, 1, -1, 0, 1);
+
+    // Future: install vite-glsl-loader and use import statements
+    const vertexShader = `
             varying vec2 vUv;
 
             void main() {
@@ -22,8 +22,8 @@ export class UIShader {
             }
         `;
 
-        // Future: install vite-glsl-loader and use import statements
-        const fragmentShader = `
+    // Future: install vite-glsl-loader and use import statements
+    const fragmentShader = `
             varying vec2 vUv;
             uniform float time;
             uniform vec3 color;
@@ -41,45 +41,45 @@ export class UIShader {
             }
         `;
 
-        // Create shader material
-        this.material = new THREE.ShaderMaterial({
-            uniforms: {
-                time: { value: 0 },
-                color: { value: new THREE.Color(0x1a2b4c) }
-            },
-            vertexShader,
-            fragmentShader,
-            transparent: true
-        });
-        
-        this.createPanelMeshes();
-    }
+    // Create shader material
+    this.material = new THREE.ShaderMaterial({
+      uniforms: {
+        time: { value: 0 },
+        color: { value: new THREE.Color(0x1a2b4c) },
+      },
+      vertexShader,
+      fragmentShader,
+      transparent: true,
+    });
 
-    /*
-     * Create meshes for each panel
-     */
-    createPanelMeshes() {
-        const panels = document.querySelectorAll('.panel');
-        panels.forEach(panel => {
-            const rect = panel.getBoundingClientRect();
-            const geometry = new THREE.PlaneGeometry(rect.width, rect.height);
-            const mesh = new THREE.Mesh(geometry, this.material.clone());
-            
-            // Position mesh at panel position
-            mesh.position.set(
-                rect.left + rect.width / 2,
-                -rect.top - rect.height / 2,
-                0
-            );
-            
-            this.scene.add(mesh);
-        });
-    }
+    this.createPanelMeshes();
+  }
 
-    /*
-     * Update the shader
-     */
-    update() {
-        this.material.uniforms.time.value = this.clock.getElapsedTime();
-    }
+  /**
+   * Create meshes for each panel
+   **/
+  createPanelMeshes() {
+    const panels = document.querySelectorAll(".panel");
+    panels.forEach((panel) => {
+      const rect = panel.getBoundingClientRect();
+      const geometry = new THREE.PlaneGeometry(rect.width, rect.height);
+      const mesh = new THREE.Mesh(geometry, this.material.clone());
+
+      // Position mesh at panel position
+      mesh.position.set(
+        rect.left + rect.width / 2,
+        -rect.top - rect.height / 2,
+        0
+      );
+
+      this.scene.add(mesh);
+    });
+  }
+
+  /**
+   * Update the shader
+   **/
+  update() {
+    this.material.uniforms.time.value = this.clock.getElapsedTime();
+  }
 }

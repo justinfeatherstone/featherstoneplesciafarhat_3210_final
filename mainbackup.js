@@ -8,9 +8,9 @@ import { CELESTIAL_BODIES } from "./data/celestialBodies.js";
 import { Lensflare, LensflareElement } from "three/addons/objects/Lensflare.js";
 import { scale } from "./core/Utils.js";
 
-/*
+/**
  * Global variables
- */
+ **/
 let scene, renderer, camera, controls;
 let currentFocusIndex = 0; // Initialize to 0 to focus on the Sun initially
 let planetMeshes = []; // Array to store all planet meshes in order
@@ -20,9 +20,9 @@ let uiShader;
 let timeScale = 1;
 let isPaused = false;
 
-/*
+/**
  * Initialize the scene
- */
+ **/
 function init() {
   // Create scene
   scene = new THREE.Scene();
@@ -164,10 +164,10 @@ function init() {
   createSunGlow();
 }
 
-/*
+/**
  * Navigation callback for UI arrows
  * @param {Number} direction - -1 for previous, 1 for next
- */
+ **/
 function handleNavigate(direction) {
   let newIndex;
   if (direction === -1) {
@@ -181,51 +181,78 @@ function handleNavigate(direction) {
   focusOnPlanet(newIndex);
 }
 
-/*
+/**
  * Main animation loop
- */
+ **/
 function animate() {
   requestAnimationFrame(() => this.animate());
-  
+
   if (!this.isPaused.value) {
     // Rotate each planet
     this.planetManager.planets.forEach((planet, index) => {
-      const celestialBody = CELESTIAL_BODIES[Object.keys(CELESTIAL_BODIES)[index]];
+      const celestialBody =
+        CELESTIAL_BODIES[Object.keys(CELESTIAL_BODIES)[index]];
       let rotationSpeed = 0.01;
 
       if (celestialBody.rotation_period) {
         switch (celestialBody.name.toLowerCase()) {
           case "sun":
-            rotationSpeed = (1 / celestialBody.rotation_period) * 0.005 * this.timeScale.value;
+            rotationSpeed =
+              (1 / celestialBody.rotation_period) *
+              0.005 *
+              this.timeScale.value;
             break;
           case "mercury":
-            rotationSpeed = (1 / celestialBody.rotation_period) * 0.02 * this.timeScale.value;
+            rotationSpeed =
+              (1 / celestialBody.rotation_period) * 0.02 * this.timeScale.value;
             break;
           case "venus":
-            rotationSpeed = (1 / Math.abs(celestialBody.rotation_period)) * 0.02 * this.timeScale.value;
+            rotationSpeed =
+              (1 / Math.abs(celestialBody.rotation_period)) *
+              0.02 *
+              this.timeScale.value;
             if (celestialBody.rotation_period < 0) rotationSpeed *= -1;
             break;
           case "earth":
-            rotationSpeed = (1 / (celestialBody.rotation_period / 24)) * 0.04 * this.timeScale.value;
+            rotationSpeed =
+              (1 / (celestialBody.rotation_period / 24)) *
+              0.04 *
+              this.timeScale.value;
             break;
           case "mars":
-            rotationSpeed = (1 / (celestialBody.rotation_period / 24)) * 0.04 * this.timeScale.value;
+            rotationSpeed =
+              (1 / (celestialBody.rotation_period / 24)) *
+              0.04 *
+              this.timeScale.value;
             break;
           case "jupiter":
-            rotationSpeed = (1 / (celestialBody.rotation_period / 24)) * 0.06 * this.timeScale.value;
+            rotationSpeed =
+              (1 / (celestialBody.rotation_period / 24)) *
+              0.06 *
+              this.timeScale.value;
             break;
           case "saturn":
-            rotationSpeed = (1 / (celestialBody.rotation_period / 24)) * 0.06 * this.timeScale.value;
+            rotationSpeed =
+              (1 / (celestialBody.rotation_period / 24)) *
+              0.06 *
+              this.timeScale.value;
             break;
           case "uranus":
-            rotationSpeed = (1 / Math.abs(celestialBody.rotation_period / 24)) * 0.04 * this.timeScale.value;
+            rotationSpeed =
+              (1 / Math.abs(celestialBody.rotation_period / 24)) *
+              0.04 *
+              this.timeScale.value;
             if (celestialBody.rotation_period < 0) rotationSpeed *= -1;
             break;
           case "neptune":
-            rotationSpeed = (1 / (celestialBody.rotation_period / 24)) * 0.04 * this.timeScale.value;
+            rotationSpeed =
+              (1 / (celestialBody.rotation_period / 24)) *
+              0.04 *
+              this.timeScale.value;
             break;
           case "pluto":
-            rotationSpeed = (1 / celestialBody.rotation_period) * 0.02 * this.timeScale.value;
+            rotationSpeed =
+              (1 / celestialBody.rotation_period) * 0.02 * this.timeScale.value;
             break;
           default:
             rotationSpeed = 0.001;
@@ -257,22 +284,25 @@ function animate() {
 
   // Update lights and render scene
   this.effectManager.updateLights();
-  this.sceneManager.renderer.render(this.sceneManager.scene, this.sceneManager.camera);
+  this.sceneManager.renderer.render(
+    this.sceneManager.scene,
+    this.sceneManager.camera
+  );
 }
 
-/*
+/**
  * Resize the canvas when the window is resized
- */
+ **/
 window.addEventListener("resize", () => {
   camera.aspect = window.innerWidth / window.innerHeight;
   camera.updateProjectionMatrix();
   renderer.setSize(window.innerWidth, window.innerHeight);
 });
 
-/*
+/**
  * Handle key presses
  * @param {Object} event - The event
- */
+ **/
 function handleKeyPress(event) {
   switch (event.key) {
     case "ArrowRight":
@@ -308,9 +338,9 @@ function handleKeyPress(event) {
   }
 }
 
-/*
+/**
  * Update the zoom speed based on the current planet
- */
+ **/
 function updateZoomSpeed() {
   if (currentFocusIndex >= 0) {
     const targetPlanet = planetMeshes[currentFocusIndex].mesh;
@@ -325,9 +355,9 @@ function updateZoomSpeed() {
   }
 }
 
-/*
+/**
  * Update the planet positions based on the current view
- */
+ **/
 function updatePlanetPositions() {
   if (isComparisonView) {
     // Place planets side by side with small gaps
@@ -575,10 +605,10 @@ function updateLights() {
   }
 }
 
-/*
+/**
  * Add a cube background to the scene
  * @param {Object} scene - The scene
- */
+ **/
 function addCubeBackground(scene) {
   const loader = new THREE.CubeTextureLoader();
   const texture = loader.load([
@@ -592,7 +622,7 @@ function addCubeBackground(scene) {
   scene.background = texture;
 }
 
-/*
+/**
  * Initialize the scene
- */
+ **/
 init();

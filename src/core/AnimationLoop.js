@@ -1,7 +1,18 @@
 import { scale } from "../core/Utils.js";
-import * as THREE from 'three';
+import * as THREE from "three";
 
+/**
+ * Animation Loop Module
+ **/
 export class AnimationLoop {
+  /**
+   * Constructor
+   * @param {Object} sceneManager - The scene manager
+   * @param {Object} planetManager - The planet manager
+   * @param {Object} effectManager - The effect manager
+   * @param {Object} timeScaleRef - The time scale reference
+   * @param {Object} isPausedRef - The is paused reference
+   **/
   constructor(
     sceneManager,
     planetManager,
@@ -18,6 +29,9 @@ export class AnimationLoop {
     this.lastFrameTime = Date.now(); // Timestamp of the last frame
   }
 
+  /**
+   * Animate the scene
+   **/
   animate() {
     requestAnimationFrame(() => this.animate());
 
@@ -27,28 +41,30 @@ export class AnimationLoop {
     const deltaTimeDays = deltaTimeMs / 86400000;
 
     if (!this.isPaused.value) {
-        this.simulationTime += deltaTimeDays * this.timeScale.value;
+      this.simulationTime += deltaTimeDays * this.timeScale.value;
 
-        // Update planet positions
-        this.planetManager.planets.forEach((planet) => {
-            if (planet.orbitalElements) {
-                planet.calculateOrbitalPosition(this.simulationTime);
-            }
-            planet.group.position.copy(
-                scale.distanceVector(planet.orbitalPosition)
-            );
-        });
-
-        // Update planet rotations
-        this.planetManager.planets.forEach((planet) => {
-            planet.rotatePlanet(0.001 * this.timeScale.value);
-        });
-
-        // Update sun shader
-        const sunMesh = this.planetManager.planets.find(p => p.name.toLowerCase() === 'sun')?.mesh;
-        if (sunMesh && sunMesh.material.uniforms) {
-            sunMesh.material.uniforms.time.value += 0.01 * this.timeScale.value;
+      // Update planet positions
+      this.planetManager.planets.forEach((planet) => {
+        if (planet.orbitalElements) {
+          planet.calculateOrbitalPosition(this.simulationTime);
         }
+        planet.group.position.copy(
+          scale.distanceVector(planet.orbitalPosition)
+        );
+      });
+
+      // Update planet rotations
+      this.planetManager.planets.forEach((planet) => {
+        planet.rotatePlanet(0.001 * this.timeScale.value);
+      });
+
+      // Update sun shader
+      const sunMesh = this.planetManager.planets.find(
+        (p) => p.name.toLowerCase() === "sun"
+      )?.mesh;
+      if (sunMesh && sunMesh.material.uniforms) {
+        sunMesh.material.uniforms.time.value += 0.01 * this.timeScale.value;
+      }
     }
 
     // Update UI shader
@@ -58,23 +74,26 @@ export class AnimationLoop {
 
     // **Update Camera Controls Target and Position if a Planet is Focused**
     if (this.planetManager.currentFocusIndex !== -1) {
-        const targetPlanet = this.planetManager.planets[this.planetManager.currentFocusIndex];
-        const planetPosition = targetPlanet.group.position;
+      const targetPlanet =
+        this.planetManager.planets[this.planetManager.currentFocusIndex];
+      const planetPosition = targetPlanet.group.position;
 
-        // Get the current camera-to-target vector
-        const cameraToTarget = new THREE.Vector3().subVectors(
-            this.sceneManager.camera.position,
-            this.sceneManager.controls.target
-        );
+      // Get the current camera-to-target vector
+      const cameraToTarget = new THREE.Vector3().subVectors(
+        this.sceneManager.camera.position,
+        this.sceneManager.controls.target
+      );
 
-        // Update the target to the planet's new position
-        this.sceneManager.controls.target.copy(planetPosition);
-        
-        // Move the camera by the same offset to maintain relative position
-        this.sceneManager.camera.position.copy(planetPosition).add(cameraToTarget);
-        
-        // Let OrbitControls handle rotation and zoom
-        this.sceneManager.controls.update();
+      // Update the target to the planet's new position
+      this.sceneManager.controls.target.copy(planetPosition);
+
+      // Move the camera by the same offset to maintain relative position
+      this.sceneManager.camera.position
+        .copy(planetPosition)
+        .add(cameraToTarget);
+
+      // Let OrbitControls handle rotation and zoom
+      this.sceneManager.controls.update();
     }
 
     // Update UI shader
@@ -86,15 +105,19 @@ export class AnimationLoop {
     this.planetManager.updateZoomSpeed();
 
     // Update Orbit Visibility
-    this.planetManager.updateOrbitVisibility(this.sceneManager.camera.position.distanceTo(this.sceneManager.controls.target));
+    this.planetManager.updateOrbitVisibility(
+      this.sceneManager.camera.position.distanceTo(
+        this.sceneManager.controls.target
+      )
+    );
 
     // Update controls
     this.sceneManager.controls.update();
 
     // Update sun light intensity
-    const sunLight = this.planetManager.planets.find(p => p.name.toLowerCase() === 'sun')?.mesh.children.find(
-      (child) => child instanceof THREE.PointLight
-    );
+    const sunLight = this.planetManager.planets
+      .find((p) => p.name.toLowerCase() === "sun")
+      ?.mesh.children.find((child) => child instanceof THREE.PointLight);
     if (sunLight) {
       // More subtle pulsing
       const pulseIntensity = 2.3 + Math.sin(Date.now() * 0.0005) * 0.2;

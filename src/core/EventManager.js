@@ -1,9 +1,16 @@
+/**
+ * Event Manager Module
+ **/
 export class EventManager {
   constructor(sceneManager, planetManager) {
     this.sceneManager = sceneManager;
     this.planetManager = planetManager;
+    this.isComparisonView = false;
   }
 
+  /**
+   * Add event listeners
+   **/
   addEventListeners() {
     window.addEventListener("keydown", (e) => this.handleKeyPress(e));
     this.sceneManager.resizeHandler();
@@ -22,15 +29,12 @@ export class EventManager {
         }
       });
     });
-
-    // Add other event listeners as required
-    // ...
   }
 
-  /*
+  /**
    * Handle key presses
    * @param {Object} event - The event
-   */
+   **/
   handleKeyPress(event) {
     switch (event.key) {
       case "ArrowRight":
@@ -50,14 +54,13 @@ export class EventManager {
           scale.distance(ASTRONOMICAL_UNIT * 2)
         );
         break;
-      case "c":
       case "C":
-        isComparisonView = !isComparisonView;
-        updatePlanetPositions();
+        this.isComparisonView = !this.isComparisonView;
+        this.updatePlanetPositions();
         // Reset camera to view all planets
-        currentFocusIndex = -1;
-        controls.target.set(0, 0, 0);
-        const viewDistance = isComparisonView
+        this.currentFocusIndex = -1;
+        this.sceneManager.controls.target.set(0, 0, 0);
+        const viewDistance = this.isComparisonView
           ? scale.size(SUN_DIAMETER * 2)
           : scale.distance(ASTRONOMICAL_UNIT * 2);
         camera.position.set(0, viewDistance, viewDistance);
@@ -65,24 +68,26 @@ export class EventManager {
     }
   }
 
+  /**
+   * Initialize time controls
+   **/
   initTimeControls() {
-    const slider = document.getElementById('timeSlider');
-    const timeValue = document.getElementById('timeValue');
-    const pauseButton = document.getElementById('pauseButton');
+    const slider = document.getElementById("timeSlider");
+    const timeValue = document.getElementById("timeValue");
+    const pauseButton = document.getElementById("pauseButton");
 
     slider.value = 0;
     this.timeScale.value = 1;
 
-    slider.addEventListener('input', (e) => {
+    slider.addEventListener("input", (e) => {
       const value = parseFloat(e.target.value);
-      // Logic for updating timeScale
-      // ...
+      this.timeScale.value = value;
     });
 
-    pauseButton.addEventListener('click', () => {
-      console.log('pauseButton clicked');
+    pauseButton.addEventListener("click", () => {
+      console.log("pauseButton clicked");
       this.isPaused.value.set(!this.isPaused.value);
-      pauseButton.textContent = this.isPaused.value ? 'Resume' : 'Pause';
+      pauseButton.textContent = this.isPaused.value ? "Resume" : "Pause";
     });
   }
 }

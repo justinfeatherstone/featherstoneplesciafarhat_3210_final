@@ -1,9 +1,9 @@
-import { SceneManager } from './core/SceneManager.js';
-import { EffectManager } from './core/EffectsManager.js';
-import { PlanetManager } from './core/PlanetManager.js';
-import { AnimationLoop } from './core/AnimationLoop.js';
-import { EventManager } from './core/EventManager.js';
-import { scale } from './core/Utils.js';
+import { SceneManager } from "./core/SceneManager.js";
+import { EffectManager } from "./core/EffectsManager.js";
+import { PlanetManager } from "./core/PlanetManager.js";
+import { AnimationLoop } from "./core/AnimationLoop.js";
+import { EventManager } from "./core/EventManager.js";
+import { scale } from "./core/Utils.js";
 
 // Global variables
 let timeScale = { value: 1 };
@@ -16,7 +16,11 @@ sceneManager.initCamera(scale);
 //sceneManager.initHelpers();
 
 // Initialize Planet Manager
-const planetManager = new PlanetManager(scale, sceneManager, sceneManager.scene);
+const planetManager = new PlanetManager(
+  scale,
+  sceneManager,
+  sceneManager.scene
+);
 await planetManager.initPlanets();
 
 // Set up the circular reference
@@ -43,8 +47,10 @@ const animationLoop = new AnimationLoop(
   planetManager,
   effectManager,
   timeScale,
-  isPaused,
+  isPaused
 );
+
+// Start the animation loop
 animationLoop.animate();
 
 // Initialize Event Manager

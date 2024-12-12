@@ -1,6 +1,9 @@
-import * as THREE from 'three';
-import { Lensflare, LensflareElement } from 'three/addons/objects/Lensflare.js';
+import * as THREE from "three";
+import { Lensflare, LensflareElement } from "three/addons/objects/Lensflare.js";
 
+/**
+ * Effects Manager Module
+ **/
 export class EffectManager {
   constructor(scene, planetMeshes, camera) {
     this.scene = scene;
@@ -8,27 +11,33 @@ export class EffectManager {
     this.camera = camera;
   }
 
+  /**
+   * Add a cube background to the scene
+   **/
   addCubeBackground() {
     const loader = new THREE.CubeTextureLoader();
     const texture = loader.load([
-      'static/textures/stars_milky_way/px.jpg', // right
-      'static/textures/stars_milky_way/nx.jpg', // left
-      'static/textures/stars_milky_way/py.jpg', // top
-      'static/textures/stars_milky_way/ny.jpg', // bottom
-      'static/textures/stars_milky_way/pz.jpg', // front
-      'static/textures/stars_milky_way/nz.jpg', // back
+      "static/textures/stars_milky_way/px.jpg", // right
+      "static/textures/stars_milky_way/nx.jpg", // left
+      "static/textures/stars_milky_way/py.jpg", // top
+      "static/textures/stars_milky_way/ny.jpg", // bottom
+      "static/textures/stars_milky_way/pz.jpg", // front
+      "static/textures/stars_milky_way/nz.jpg", // back
     ]);
     this.scene.background = texture;
   }
 
+  /**
+   * Add a sun flare to the sun
+   **/
   addSunFlare() {
     const textureLoader = new THREE.TextureLoader();
     const textureFlare = textureLoader.load(
       "static/textures/lensflare/flare.png"
     );
-  
+
     const lensflare = new Lensflare();
-  
+
     // Create a single, stronger main flare
     const mainFlare = new LensflareElement(
       textureFlare,
@@ -37,7 +46,7 @@ export class EffectManager {
       new THREE.Color(1, 0.8, 0.5)
     );
     lensflare.addElement(mainFlare);
-  
+
     // Add secondary flares with carefully chosen distances
     lensflare.addElement(
       new LensflareElement(
@@ -47,7 +56,7 @@ export class EffectManager {
         new THREE.Color(1, 0.9, 0.6)
       )
     );
-  
+
     lensflare.addElement(
       new LensflareElement(
         textureFlare,
@@ -56,7 +65,7 @@ export class EffectManager {
         new THREE.Color(1, 0.8, 0.5)
       )
     );
-  
+
     lensflare.addElement(
       new LensflareElement(
         textureFlare,
@@ -65,13 +74,16 @@ export class EffectManager {
         new THREE.Color(0.9, 0.7, 0.4)
       )
     );
-  
+
     // Position the flare at the sun's center
     lensflare.position.set(0, 0, 0);
-  
+
     this.planetMeshes[0].mesh.add(lensflare);
   }
-  
+
+  /**
+   * Add a sun glow to the sun
+   **/
   createSunGlow() {
     const spriteMaterial = new THREE.SpriteMaterial({
       map: new THREE.TextureLoader().load("static/textures/glow.png"),
@@ -82,16 +94,16 @@ export class EffectManager {
       depthTest: false, // Prevent z-fighting
       depthWrite: false, // Prevent z-fighting
     });
-  
+
     const sunRadius = this.planetMeshes[0].mesh.geometry.parameters.radius;
-  
+
     // Create multiple layers with different scales and slightly different positions
     const layers = [
       { scale: 4.0, opacity: 0.2, z: 0.1 },
       { scale: 3.0, opacity: 0.3, z: 0.05 },
       { scale: 2.5, opacity: 0.4, z: 0 },
     ];
-  
+
     layers.forEach((layer) => {
       const sprite = new THREE.Sprite(spriteMaterial.clone());
       sprite.scale.set(sunRadius * layer.scale, sunRadius * layer.scale, 1.0);
@@ -101,12 +113,15 @@ export class EffectManager {
     });
   }
 
+  /**
+   * Update the lights in the scene
+   **/
   updateLights() {
     if (!this.planetMeshes[0]) return;
-  
+
     const sunCenter = new THREE.Vector3();
     this.planetMeshes[0].mesh.getWorldPosition(sunCenter);
-  
+
     // Update point light position
     const sunLight = this.planetMeshes[0].mesh.children.find(
       (child) => child instanceof THREE.PointLight
@@ -114,13 +129,13 @@ export class EffectManager {
     if (sunLight) {
       sunLight.position.set(0, 0, 0);
     }
-  
+
     // Update lens flare visibility and intensity
     const lensflare = this.planetMeshes[0].mesh.children.find(
       (child) => child instanceof Lensflare
     );
     if (!lensflare || !lensflare.elements) return;
-  
+
     // Calculate angle between camera and sun
     const dirToCamera = new THREE.Vector3()
       .subVectors(camera.position, sunCenter)
@@ -129,10 +144,10 @@ export class EffectManager {
       this.planetMeshes[0].mesh.quaternion
     );
     const angle = dirToCamera.dot(sunForward);
-  
+
     // Adjust flare elements based on viewing angle
     const visibility = Math.max(0, (angle + 1) / 2); // Convert from [-1,1] to [0,1]
-  
+
     // Check if elements array exists and has items
     if (Array.isArray(lensflare.elements) && lensflare.elements.length > 0) {
       lensflare.elements.forEach((element, index) => {
@@ -148,7 +163,7 @@ export class EffectManager {
         }
       });
     }
-  
+
     // Update directional light
     const secondarySunLight = this.scene.children.find(
       (child) => child instanceof THREE.DirectionalLight

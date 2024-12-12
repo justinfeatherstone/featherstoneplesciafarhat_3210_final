@@ -1,0 +1,465 @@
+\documentclass[12pt, a4paper]{article}
+
+% Packages for formatting
+\usepackage[T1]{fontenc}
+\usepackage[utf8]{inputenc}
+\usepackage{lmodern}
+\usepackage{graphicx}
+\usepackage{hyperref}
+\usepackage{geometry}
+\usepackage{fancyhdr}
+\usepackage{titlesec}
+\usepackage{tocloft}
+\usepackage{float}
+\usepackage{caption}
+\usepackage{booktabs}
+\usepackage{array}
+\usepackage{amsmath}
+\usepackage{setspace}
+\usepackage{parskip}
+
+% Set up geometry
+\geometry{
+    a4paper,
+    left=25mm,
+    right=25mm,
+    top=25mm,
+    bottom=25mm,
+}
+
+% Set up header and footer
+\pagestyle{fancy}
+\fancyhf{}
+\fancyhead[L]{CS3210 Final - Solar Simulator}
+\fancyfoot[C]{\thepage}
+
+% Section formatting
+\titleformat{\section}{\normalfont\Large\bfseries}{\thesection}{1em}{}
+\titleformat{\subsection}{\normalfont\large\bfseries}{\thesubsection}{1em}{}
+
+% Hyperlink setup
+\hypersetup{
+    colorlinks=true,
+    linkcolor=blue,
+    filecolor=magenta,
+    urlcolor=cyan,
+}
+
+% URL style
+\urlstyle{same}
+
+\begin{document}
+
+% Title Page
+\begin{titlepage}
+    \centering
+    \vspace*{4cm}
+    {\Huge\bfseries CS3210 Final - Solar Simulator \par}
+    \vspace{1cm}
+    {\Large User Manual \par}
+    \vfill
+    {\large \today \par}
+\end{titlepage}
+
+\tableofcontents
+\thispagestyle{empty}
+\clearpage
+
+% Start content
+\setcounter{page}{1}
+
+\section{Introduction}
+
+Welcome to the \textbf{Solar System Simulator}, an interactive 3D visualization
+of our solar system built with Three.js. This user manual will guide you
+through installing, using, and understanding the features of the simulator.
+Whether you're an astronomy enthusiast or just curious about our cosmic
+neighborhood, this simulator is designed to provide an immersive educational
+experience.
+
+\section{Background Information}
+
+Understanding the vastness and complexity of our solar system can be
+challenging. This simulator aims to bridge that gap by visualizing the
+positions, movements, and characteristics of the planets in an interactive 3D
+environment.
+
+\subsection{Key Concepts}
+
+\begin{itemize}
+    \item \textbf{Orbital Mechanics}: The simulator uses Keplerian orbital elements to calculate the positions of planets over time, providing an accurate representation of their movements.
+    \item \textbf{Axial Tilt}: Each planet's rotation axis is tilted relative to its orbital plane, affecting the simulation of seasons and day/night cycles.
+    \item \textbf{Astronomical Units (AU)}: Distances in space are immense, so the simulator scales down measurements using AU, where 1 AU is the average distance from the Earth to the Sun (~149.6 million kilometers).
+\end{itemize}
+
+\section{Installation}
+
+\subsection{Prerequisites}
+
+Before installing the Solar System Simulator, ensure that you have the
+following software installed on your system:
+
+\begin{itemize}
+    \item \textbf{Node.js} (latest LTS version)
+    \item \textbf{npm} (comes with Node.js)
+    \item \textbf{Git LFS} (Git Large File Storage)
+    \item \textbf{Modern Web Browser} (with WebGL 2.0 support, e.g., Chrome, Firefox)
+\end{itemize}
+
+\newpage
+
+\subsection{Git LFS Setup}
+
+This project uses Git LFS to manage large texture files. Follow these steps to
+set up Git LFS:
+
+\begin{enumerate}
+    \item \textbf{Install Git LFS}:
+
+          \begin{itemize}
+              \item \textbf{Windows}:
+                    \begin{verbatim}
+winget install Git.LFS
+        \end{verbatim}
+              \item \textbf{macOS}:
+                    \begin{verbatim}
+brew install git-lfs
+        \end{verbatim}
+              \item \textbf{Linux}:
+                    \begin{verbatim}
+sudo apt install git-lfs
+        \end{verbatim}
+          \end{itemize}
+
+    \item \textbf{Initialize Git LFS}:
+
+          \begin{verbatim}
+git lfs install
+    \end{verbatim}
+
+\end{enumerate}
+
+\subsection{Cloning the Repository}
+
+Open your terminal and execute the following commands:
+
+\begin{enumerate}
+    \item \textbf{Clone the repository}:
+
+          \begin{verbatim}
+git clone https://github.com/justinfeatherstone/
+featherstoneplesciafarhat_3210_final.git
+    \end{verbatim}
+
+    \item \textbf{Navigate to the project directory}:
+
+          \begin{verbatim}
+cd featherstoneplesciafarhat_3210_final
+    \end{verbatim}
+
+    \item \textbf{Pull LFS files (if not already done)}:
+
+          \begin{verbatim}
+git lfs pull
+    \end{verbatim}
+
+\end{enumerate}
+
+\subsection{Installing Dependencies}
+
+Install the required npm packages:
+
+\begin{verbatim}
+npm install
+\end{verbatim}
+
+\newpage
+
+\subsection{Running the Simulator}
+
+Start the development server:
+
+\begin{verbatim}
+npx vite
+\end{verbatim}
+
+Open your web browser and navigate to \url{http://localhost:5173} to view the
+simulator.
+
+\section{Getting Started}
+
+Upon launching the simulator, you will see the Sun at the center, surrounded by
+the orbiting planets.
+
+\subsection{User Interface Overview}
+
+The simulator's interface consists of four main panels:
+
+\begin{enumerate}
+    \item \textbf{Navigation Panel}: Located on the left side, allows quick selection of planets and reset view.
+    \item \textbf{Planet Information Panel}: On the right side, displays detailed information about the selected planet.
+    \item \textbf{Time Control Panel}: At the bottom center, controls simulation speed and allows pausing/resuming time.
+    \item \textbf{Orbit Controls Panel}: Next to the planet information panel, allows toggling the visibility of orbital paths.
+\end{enumerate}
+
+\begin{figure}[H]
+    \centering
+    \caption{Simulator Interface Overview}
+\end{figure}
+
+\section{Using the Simulator}
+
+\subsection{Navigating the Solar System}
+
+\begin{itemize}
+    \item \textbf{Rotate View}: Click and drag to rotate around the current focus point.
+    \item \textbf{Zoom}: Use the mouse wheel or trackpad scrolling to zoom in and out.
+    \item \textbf{Pan}: Right-click and drag to pan the camera.
+\end{itemize}
+
+\subsection{Interacting with Planets}
+
+\begin{itemize}
+    \item \textbf{Select a Planet}: Click on a planet or select it from the navigation panel to focus on it.
+    \item \textbf{Access Planet Information}: View detailed information in the planet information panel.
+    \item \textbf{Navigate Between Planets}: Use the left (\texttt{<}) and right (\texttt{>}) arrows in the planet information panel.
+\end{itemize}
+
+\subsection{Adjusting Time Speed}
+
+\begin{itemize}
+    \item \textbf{Time Slider}: Adjust the simulation speed using the slider in the time control panel.
+    \item \textbf{Pause/Resume}: Click the "Pause" button to halt time progression; click again to resume.
+\end{itemize}
+
+\subsection{Controlling Orbits}
+
+\begin{itemize}
+    \item \textbf{Toggle Orbit Visibility}: Use the checkboxes in the orbit controls panel to show or hide orbital paths.
+    \item \textbf{Customize Orbits}: Select specific planets whose orbits you wish to view or hide.
+\end{itemize}
+
+\section{Technical Challenges and Design Decisions}
+
+\subsection{Accurate Orbital Mechanics}
+
+\textbf{Challenge}: Implementing realistic planet movements using Keplerian orbital elements.
+
+\textbf{Solution}: Calculated each planet's position based on its orbital parameters, accounting for eccentricity, inclination, and other factors. Solved Kepler's Equation numerically to simulate true orbital paths.
+
+\subsubsection{Design Decision}
+
+Chose a balance between accuracy and performance by adjusting the number of
+segments in orbit lines based on each planet's eccentricity.
+
+\subsection{Performance Optimization}
+
+\textbf{Challenge}: Rendering complex 3D scenes with detailed textures and effects without compromising performance.
+
+\textbf{Solution}:
+
+\begin{itemize}
+    \item Implemented efficient algorithms for orbital calculations.
+    \item Applied Levels of Detail (LOD) techniques to manage resource-intensive
+          elements.
+    \item Optimized textures and utilized Git LFS to handle large files.
+\end{itemize}
+
+\subsubsection{Design Decision}
+
+Prioritized essential visual elements and introduced performance monitoring to
+ensure smooth operation across devices.
+
+\subsection{Visual Realism}
+
+\textbf{Challenge}: Achieving visually appealing and realistic representations of celestial bodies.
+
+\textbf{Solution}:
+
+\begin{itemize}
+    \item Used high-resolution textures for planet surfaces.
+    \item Created custom shader materials for effects like Earth's day/night cycle and
+          the Sun's glow.
+    \item Added visual effects such as lens flares, atmospheric haze, and rotating clouds
+          on Earth.
+\end{itemize}
+
+\subsubsection{Design Decision}
+
+Implemented custom shaders for key planets to enhance realism, accepting the
+added complexity for improved user experience.
+
+\subsection{User Interface Design}
+
+\textbf{Challenge}: Designing an intuitive and responsive UI that provides necessary information without overwhelming the user.
+
+\textbf{Solution}:
+
+\begin{itemize}
+    \item Organized information into collapsible sections within the planet information
+          panel.
+    \item Implemented dynamic controls that update based on user interaction.
+    \item Ensured responsiveness across different screen sizes using CSS Grid and
+          flexible layouts.
+\end{itemize}
+
+\subsubsection{Design Decision}
+
+Placed essential controls within easy reach and made advanced options
+accessible but unobtrusive.
+
+\subsection{Time Manipulation}
+
+\textbf{Challenge}: Allowing users to control the simulation speed while maintaining accurate physics.
+
+\textbf{Solution}:
+
+\begin{itemize}
+    \item Implemented a time scaling system that adjusts the simulation's time step based
+          on user input.
+    \item Ensured that orbital calculations are synchronized with the time scale for
+          consistency.
+\end{itemize}
+
+\subsubsection{Design Decision}
+
+Allowed negative time scales for reverse simulation and provided intuitive
+feedback on time changes.
+
+\section{Features Overview}
+
+\subsection{Realistic Planet Textures}
+
+High-quality visuals provide an immersive experience, using textures sourced
+from reputable astronomical databases.
+
+\subsection{Accurate Orbits}
+
+Planets move according to real-world astronomical data, calculated using
+Keplerian orbital elements.
+
+\subsection{Interactive Controls}
+
+Full control over navigation, time manipulation, and visual elements enhances
+user engagement.
+
+\subsection{Informative Panels}
+
+Detailed information about each planet is presented in an organized and
+accessible manner.
+
+\subsection{Visual Effects}
+
+Incorporation of lens flares, glowing sun effects, rotating clouds, and
+atmospheric phenomena add to the realism of the simulation.
+
+\subsection{Responsive Design}
+
+The user interface is optimized for various screen sizes, ensuring a consistent
+experience across devices.
+
+\section{Troubleshooting}
+
+\subsection{Planets Appear Without Textures}
+
+\textbf{Cause}: Texture files are missing due to Git LFS not being properly configured.
+
+\textbf{Solution}:
+
+Ensure Git LFS is installed and initialized before cloning the repository.
+
+\begin{enumerate}
+    \item Install Git LFS (\textit{see Section 3.2}).
+    \item Initialize Git LFS:
+
+          \begin{verbatim}
+git lfs install
+    \end{verbatim}
+
+    \item Clone the repository and pull LFS files:
+
+          \begin{verbatim}
+git clone https://github.com/yourusername/solar-system-simulator.git
+git lfs pull
+    \end{verbatim}
+
+\end{enumerate}
+
+\subsection{Performance Issues}
+
+\textbf{Cause}: The simulation may be resource-intensive on some devices.
+
+\textbf{Solution}:
+
+\begin{itemize}
+    \item Close unnecessary applications to free up system resources.
+    \item Use a modern browser with good WebGL support (e.g., latest versions of Chrome
+          or Firefox).
+    \item Lower the simulation speed using the time control panel.
+\end{itemize}
+
+\subsection{Controls Not Responding}
+
+\textbf{Cause}: The canvas may not have focus, or there could be an error in the application.
+
+\textbf{Solution}:
+
+\begin{itemize}
+    \item Click on the canvas area to ensure it has focus.
+    \item Open the browser console to check for any error messages.
+    \item Ensure all dependencies are properly installed.
+\end{itemize}
+
+\subsection{Orbit Paths Not Visible}
+
+\textbf{Cause}: Orbit visibility may be toggled off in the orbit controls panel.
+
+\textbf{Solution}:
+
+\begin{itemize}
+    \item Open the orbit controls panel.
+    \item Ensure the checkboxes next to the desired planets are checked.
+\end{itemize}
+
+\section{Credits and Resources}
+
+\subsection{Textures}
+
+\begin{itemize}
+    \item \textbf{Solar System Scope Textures}: \href{https://www.solarsystemscope.com/textures/}{www.solarsystemscope.com/textures} (Attribution 4.0 International License)
+    \item \textbf{JHT's Planetary Pixel Emporium}: \href{https://planetpixelemporium.com/}{planetpixelemporium.com} (Used with permission)
+\end{itemize}
+
+\subsection{Libraries and Tools}
+
+\begin{itemize}
+    \item \textbf{Three.js}: JavaScript 3D library used for rendering.
+    \item \textbf{Vite}: Development server and build tool for modern web projects.
+    \item \textbf{Git LFS}: Git extension for versioning large files.
+    \item \textbf{Font Awesome}: Icon library for UI elements.
+    \item \textbf{Google Fonts}: Typography resources for the user interface.
+\end{itemize}
+
+\subsection{Further Reading}
+
+\begin{itemize}
+    \item \textbf{Keplerian Orbital Elements}: \href{https://en.wikipedia.org/wiki/Orbital_elements}{Wikipedia Article}
+    \item \textbf{Astronomical Units}: \href{https://solarsystem.nasa.gov/astrophysics/solar-system/}{NASA Solar System Exploration}
+    \item \textbf{Three.js Documentation}: \href{https://threejs.org/docs/}{threejs.org/docs}
+\end{itemize}
+
+\section{Conclusion}
+
+We hope this simulator provides you with an engaging way to explore our solar
+system. The combination of accurate data and interactive features aims to both
+educate and inspire curiosity about the cosmos.
+
+For any questions or feedback, please reach out!
+
+\vfill
+
+\begin{center}
+    \textit{Enjoy your journey through space!}
+\end{center}
+
+\end{document}

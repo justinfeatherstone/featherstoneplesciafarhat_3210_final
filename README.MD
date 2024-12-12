@@ -96,3 +96,7 @@ http://localhost:5173
 
 ## Fonts
 - [Google Fonts](https://fonts.google.com/)
+
+## Data
+- [Basic Data (NASA)](https://nssdc.gsfc.nasa.gov/planetary/factsheet/)
+- [Solar System Data (JPL)](https://ssd.jpl.nasa.gov/horizons/app.html#/)

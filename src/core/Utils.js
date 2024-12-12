@@ -1,5 +1,8 @@
-import { SCALE_FACTOR } from '../constants.js';
+import { SCALE_FACTOR } from "../constants.js";
 
+/**
+ * Scale method for converting actual kilometers to scene units
+ **/
 export const scale = {
   // Convert actual kilometers to scene units with safety checks
   size: (km) => {
@@ -22,5 +25,3 @@ export const scale = {
     return vector.clone().multiplyScalar(1 / SCALE_FACTOR);
   },
 };
-
-// Other utility functions if needed
