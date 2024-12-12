@@ -11,34 +11,34 @@
 \contentsline {subsection}{\numberline {4.1}User Interface Overview}{3}{subsection.4.1}%
 \contentsline {section}{\numberline {5}Using the Simulator}{3}{section.5}%
 \contentsline {subsection}{\numberline {5.1}Navigating the Solar System}{3}{subsection.5.1}%
-\contentsline {subsection}{\numberline {5.2}Interacting with Planets}{3}{subsection.5.2}%
-\contentsline {subsection}{\numberline {5.3}Adjusting Time Speed}{4}{subsection.5.3}%
-\contentsline {subsection}{\numberline {5.4}Controlling Orbits}{4}{subsection.5.4}%
-\contentsline {section}{\numberline {6}Technical Challenges and Design Decisions}{4}{section.6}%
-\contentsline {subsection}{\numberline {6.1}Accurate Orbital Mechanics}{4}{subsection.6.1}%
-\contentsline {subsubsection}{\numberline {6.1.1}Design Decision}{4}{subsubsection.6.1.1}%
-\contentsline {subsection}{\numberline {6.2}Performance Optimization}{4}{subsection.6.2}%
-\contentsline {subsubsection}{\numberline {6.2.1}Design Decision}{4}{subsubsection.6.2.1}%
-\contentsline {subsection}{\numberline {6.3}Visual Realism}{4}{subsection.6.3}%
-\contentsline {subsubsection}{\numberline {6.3.1}Design Decision}{5}{subsubsection.6.3.1}%
-\contentsline {subsection}{\numberline {6.4}User Interface Design}{5}{subsection.6.4}%
-\contentsline {subsubsection}{\numberline {6.4.1}Design Decision}{5}{subsubsection.6.4.1}%
-\contentsline {subsection}{\numberline {6.5}Time Manipulation}{5}{subsection.6.5}%
-\contentsline {subsubsection}{\numberline {6.5.1}Design Decision}{5}{subsubsection.6.5.1}%
-\contentsline {section}{\numberline {7}Features Overview}{6}{section.7}%
-\contentsline {subsection}{\numberline {7.1}Realistic Planet Textures}{6}{subsection.7.1}%
-\contentsline {subsection}{\numberline {7.2}Accurate Orbits}{6}{subsection.7.2}%
-\contentsline {subsection}{\numberline {7.3}Interactive Controls}{6}{subsection.7.3}%
-\contentsline {subsection}{\numberline {7.4}Informative Panels}{6}{subsection.7.4}%
-\contentsline {subsection}{\numberline {7.5}Visual Effects}{6}{subsection.7.5}%
-\contentsline {subsection}{\numberline {7.6}Responsive Design}{6}{subsection.7.6}%
-\contentsline {section}{\numberline {8}Troubleshooting}{6}{section.8}%
-\contentsline {subsection}{\numberline {8.1}Planets Appear Without Textures}{6}{subsection.8.1}%
-\contentsline {subsection}{\numberline {8.2}Performance Issues}{7}{subsection.8.2}%
-\contentsline {subsection}{\numberline {8.3}Controls Not Responding}{7}{subsection.8.3}%
-\contentsline {subsection}{\numberline {8.4}Orbit Paths Not Visible}{7}{subsection.8.4}%
-\contentsline {section}{\numberline {9}Credits and Resources}{7}{section.9}%
-\contentsline {subsection}{\numberline {9.1}Textures}{7}{subsection.9.1}%
-\contentsline {subsection}{\numberline {9.2}Libraries and Tools}{7}{subsection.9.2}%
-\contentsline {subsection}{\numberline {9.3}Further Reading}{8}{subsection.9.3}%
-\contentsline {section}{\numberline {10}Conclusion}{8}{section.10}%
+\contentsline {subsection}{\numberline {5.2}Interacting with Planets}{4}{subsection.5.2}%
+\contentsline {subsection}{\numberline {5.3}Adjusting Time Speed}{6}{subsection.5.3}%
+\contentsline {subsection}{\numberline {5.4}Controlling Orbits}{6}{subsection.5.4}%
+\contentsline {section}{\numberline {6}Technical Challenges and Design Decisions}{7}{section.6}%
+\contentsline {subsection}{\numberline {6.1}Accurate Orbital Mechanics}{7}{subsection.6.1}%
+\contentsline {subsubsection}{\numberline {6.1.1}Design Decision}{8}{subsubsection.6.1.1}%
+\contentsline {subsection}{\numberline {6.2}Performance Optimization}{8}{subsection.6.2}%
+\contentsline {subsubsection}{\numberline {6.2.1}Design Decision}{8}{subsubsection.6.2.1}%
+\contentsline {subsection}{\numberline {6.3}Visual Realism}{8}{subsection.6.3}%
+\contentsline {subsubsection}{\numberline {6.3.1}Design Decision}{8}{subsubsection.6.3.1}%
+\contentsline {subsection}{\numberline {6.4}User Interface Design}{8}{subsection.6.4}%
+\contentsline {subsubsection}{\numberline {6.4.1}Design Decision}{9}{subsubsection.6.4.1}%
+\contentsline {subsection}{\numberline {6.5}Time Manipulation}{9}{subsection.6.5}%
+\contentsline {subsubsection}{\numberline {6.5.1}Design Decision}{9}{subsubsection.6.5.1}%
+\contentsline {section}{\numberline {7}Features Overview}{9}{section.7}%
+\contentsline {subsection}{\numberline {7.1}Realistic Planet Textures}{9}{subsection.7.1}%
+\contentsline {subsection}{\numberline {7.2}Accurate Orbits}{9}{subsection.7.2}%
+\contentsline {subsection}{\numberline {7.3}Interactive Controls}{9}{subsection.7.3}%
+\contentsline {subsection}{\numberline {7.4}Informative Panels}{9}{subsection.7.4}%
+\contentsline {subsection}{\numberline {7.5}Visual Effects}{9}{subsection.7.5}%
+\contentsline {subsection}{\numberline {7.6}Responsive Design}{10}{subsection.7.6}%
+\contentsline {section}{\numberline {8}Troubleshooting}{10}{section.8}%
+\contentsline {subsection}{\numberline {8.1}Planets Appear Without Textures}{10}{subsection.8.1}%
+\contentsline {subsection}{\numberline {8.2}Performance Issues}{10}{subsection.8.2}%
+\contentsline {subsection}{\numberline {8.3}Controls Not Responding}{10}{subsection.8.3}%
+\contentsline {subsection}{\numberline {8.4}Orbit Paths Not Visible}{11}{subsection.8.4}%
+\contentsline {section}{\numberline {9}Credits and Resources}{11}{section.9}%
+\contentsline {subsection}{\numberline {9.1}Textures}{11}{subsection.9.1}%
+\contentsline {subsection}{\numberline {9.2}Libraries and Tools}{11}{subsection.9.2}%
+\contentsline {subsection}{\numberline {9.3}Further Reading}{11}{subsection.9.3}%
+\contentsline {section}{\numberline {10}Conclusion}{11}{section.10}%

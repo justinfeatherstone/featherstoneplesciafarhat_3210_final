@@ -16,7 +16,10 @@ An interactive 3D visualization of our solar system built with Three.js, featuri
 
 ## Presentation
 - A presentation is available in the project directory under the name "Presentation.pdf"
-[Presentation](./Presentation.pdf)
+[Presentation](CS3210 - Final Presentation.pdf)
+
+## Video 
+- A video is available showing the project being used: [Video](https://drive.google.com/file/d/1y9NlHOrsaEBpSw1uCa0fp7ucT4ayOcVF/view?usp=sharing)
 
 ## Technologies Used
 - Three.js for 3D rendering
