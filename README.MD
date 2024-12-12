@@ -10,6 +10,14 @@ An interactive 3D visualization of our solar system built with Three.js, featuri
 - Special effects including sun glow and planetary rings
 - Responsive UI with intuitive navigation controls
 
+## User Manual
+- A user manual is available in the project directory under the name "User Manual.pdf"
+[User Manual](./User Manual.pdf)
+
+## Presentation
+- A presentation is available in the project directory under the name "Presentation.pdf"
+[Presentation](./Presentation.pdf)
+
 ## Technologies Used
 - Three.js for 3D rendering
 - Custom WebGL shaders for special effects
@@ -40,7 +48,7 @@ This project uses Git Large File Storage (LFS) for managing texture files. To cl
 
 3. Clone the repository:
    ```bash
-   git clone https://github.com/yourusername/solar-system-simulator.git
+   git clone https://github.com/justinfeatherstone/featherstoneplesciafarhat_3210_final.git
    ```
 
 4. Pull LFS files (if they weren't downloaded during clone):

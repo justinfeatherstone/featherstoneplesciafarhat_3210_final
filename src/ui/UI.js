@@ -459,6 +459,7 @@ export class UI {
     orbitControlsContainer.innerHTML = ""; // Clear existing controls
 
     planets.forEach((planet, index) => {
+      if (planet.name === "sun") return;
       const wrapper = document.createElement("div");
       wrapper.classList.add("orbit-toggle-wrapper");
 
