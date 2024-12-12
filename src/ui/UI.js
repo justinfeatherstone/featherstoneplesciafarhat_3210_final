@@ -70,6 +70,44 @@ export class UI {
      * Create the info panels
      */
     createInfoPanels() {
+        const panels = document.querySelectorAll('.panel');
+        
+        panels.forEach(panel => {
+            // Assign 'right' class to the planet-info panel if not already present
+            if (panel.classList.contains('planet-info')) {
+                panel.classList.add('right');
+            }
+
+            // Create minimize toggle button
+            const toggleBtn = document.createElement('button');
+            toggleBtn.classList.add('minimize-toggle');
+
+            // Determine initial button symbol
+            const isTimeControl = panel.classList.contains('time-control');
+            const isRightPanel = panel.classList.contains('right');
+            let isMinimized = panel.classList.contains('minimized');
+
+            const updateButtonSymbol = () => {
+                if (isRightPanel) {
+                    toggleBtn.textContent = isMinimized ? '◀' : '▶';
+                } else if (isTimeControl) {
+                    toggleBtn.textContent = isMinimized ? '▲' : '▼';
+                } else {
+                    toggleBtn.textContent = isMinimized ? '▶' : '◀';
+                }
+            };
+
+            updateButtonSymbol();
+
+            toggleBtn.addEventListener('click', () => {
+                panel.classList.toggle('minimized');
+                isMinimized = panel.classList.contains('minimized');
+                updateButtonSymbol();
+            });
+
+            panel.appendChild(toggleBtn);
+        });
+
         const controlPanel = document.querySelector('.control-buttons');
         controlPanel.innerHTML = `
             <div class="control-group">
@@ -304,12 +342,26 @@ export class UI {
         orbitControlsContainer.innerHTML = ''; // Clear existing controls
 
         planets.forEach((planet, index) => {
-            const button = document.createElement('button');
-            button.textContent = `Toggle ${planet.name} Orbit`;
-            button.dataset.index = index;
-            button.classList.add('orbit-toggle-btn');
-            button.addEventListener('click', () => this.toggleOrbitVisibility(index));
-            orbitControlsContainer.appendChild(button);
+            const wrapper = document.createElement('div');
+            wrapper.classList.add('orbit-toggle-wrapper');
+
+            const checkbox = document.createElement('input');
+            checkbox.type = 'checkbox';
+            checkbox.id = `orbit-${planet.name}`;
+            checkbox.classList.add('orbit-checkbox');
+            checkbox.checked = true; // Default to visible
+            checkbox.dataset.index = index;
+
+            const label = document.createElement('label');
+            label.htmlFor = `orbit-${planet.name}`;
+            label.classList.add('orbit-label');
+            label.textContent = `${planet.name.charAt(0).toUpperCase() + planet.name.slice(1)}`;
+
+            checkbox.addEventListener('change', () => this.toggleOrbitVisibility(index));
+
+            wrapper.appendChild(checkbox);
+            wrapper.appendChild(label);
+            orbitControlsContainer.appendChild(wrapper);
         });
     }
 

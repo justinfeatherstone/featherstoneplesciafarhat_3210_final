@@ -13,7 +13,8 @@ let isPaused = { value: false };
 const sceneManager = new SceneManager(timeScale, isPaused);
 sceneManager.initRenderer();
 sceneManager.initCamera(scale);
-sceneManager.initHelpers();
+//sceneManager.initHelpers();
+
 // Initialize Planet Manager
 const planetManager = new PlanetManager(scale, sceneManager, sceneManager.scene);
 await planetManager.initPlanets();
