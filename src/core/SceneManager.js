@@ -1,7 +1,7 @@
 import * as THREE from "three";
 import { OrbitControls } from "three/examples/jsm/controls/OrbitControls.js";
-import { CELESTIAL_BODIES } from "../data/celestialBodies.js";
-import { ASTRONOMICAL_UNIT } from "../constants.js";
+import { CELESTIAL_BODIES } from "../data/CelestialBodies.js";
+import { ASTRONOMICAL_UNIT } from "../Constants.js";
 import { UI } from "../ui/UI.js";
 import { UIShader } from "../ui/UIShader.js";
 import { scale } from "./Utils.js";
@@ -55,7 +55,7 @@ export class SceneManager {
     this.controls = new OrbitControls(camera, this.renderer.domElement);
     this.controls.enableDamping = true;
     this.controls.dampingFactor = 0.05;
-    this.controls.minDistance = 0.0001;
+    this.controls.minDistance = 0.000000001;
     this.controls.maxDistance = scale.distance(ASTRONOMICAL_UNIT * 40);
     this.controls.enableZoom = true;
 

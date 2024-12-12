@@ -1,5 +1,5 @@
 import * as THREE from "three";
-import { CELESTIAL_BODIES } from "./data/celestialBodies.js";
+import { CELESTIAL_BODIES } from "./data/CelestialBodies.js";
 /**
  * Planet class
  **/
@@ -555,5 +555,8 @@ export class Planet {
     position.applyMatrix4(systemRotation);
 
     this.orbitalPosition.copy(position);
+
+    // Update the planet's group position
+    this.group.position.copy(this.orbitalPosition);
   }
 }

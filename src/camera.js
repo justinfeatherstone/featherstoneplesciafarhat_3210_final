@@ -1,6 +1,6 @@
 import * as THREE from "three";
 import { OrbitControls } from "three/examples/jsm/controls/OrbitControls.js";
-import { ASTRONOMICAL_UNIT } from "./constants.js";
+import { ASTRONOMICAL_UNIT } from "./Constants.js";
 
 /**
  * Create a camera

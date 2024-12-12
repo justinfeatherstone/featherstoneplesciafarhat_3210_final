@@ -1,12 +1,13 @@
-import { Planet } from "../planet.js";
-import { CELESTIAL_BODIES } from "../data/celestialBodies.js";
+import { Planet } from "../Planet.js";
+import { CELESTIAL_BODIES } from "../data/CelestialBodies.js";
 import { scale } from "./Utils.js";
 import * as THREE from "three";
+import { Satellite } from "../Satellite.js";
 
 /**
  * Planet Manager Module
  *
- * Responsible for creating and managing planets in the scene
+ * Responsible for creating and managing planets and satellites in the scene
  **/
 export class PlanetManager {
   /**
@@ -20,15 +21,21 @@ export class PlanetManager {
     this.sceneManager = sceneManager;
     this.scene = scene;
     this.planets = []; // Store instances of Planet
+    this.satellites = []; // Store instances of Satellite
+    this.focusableBodies = []; // Combined list of planets and satellites
     this.currentFocusIndex = -1;
-    this.currentViewDistance = null; // Add this line to store view distance
+    this.currentViewDistance = null; // Store view distance
   }
 
   /**
-   * Initialize planets
+   * Initialize planets and satellites
    **/
-  initPlanets() {
+  async initPlanets() {
+    // Initialize planets
     Object.entries(CELESTIAL_BODIES).forEach(([name, data]) => {
+      // Skip satellites during planet initialization
+      if (data.type === "Satellite") return;
+
       let normalMapPath = null;
       let specularMapPath = null;
       let cloudsMapPath = null;
@@ -39,7 +46,7 @@ export class PlanetManager {
       let nightTexturePath = null;
       let orbitalElements = null;
 
-      // if earth, set applicable textures
+      // If Earth, set applicable textures
       if (name.toLowerCase() === "earth") {
         normalMapPath = data.normalMap;
         specularMapPath = data.specularMap;
@@ -48,14 +55,14 @@ export class PlanetManager {
         nightTexturePath = data.nightTexture;
       }
 
-      // if saturn or uranus, set ring properties
+      // If Saturn or Uranus, set ring properties
       if (name.toLowerCase() === "saturn" || name.toLowerCase() === "uranus") {
         ringMapPath = data.ringMap; // Ensure this path is correct
         ringInnerRadius = scale.size(data.ringInnerRadius); // Define in kilometers
         ringOuterRadius = scale.size(data.ringOuterRadius); // Define in kilometers
       }
 
-      // if orbital elements are available, set them
+      // If orbital elements are available, set them
       if (data.orbitalElements) {
         orbitalElements = data.orbitalElements;
       } else {
@@ -64,7 +71,7 @@ export class PlanetManager {
         );
       }
 
-      // create planet instance with orbital elements
+      // Create planet instance with orbital elements
       const planet = new Planet(
         name,
         scale.size(data.diameter / 2),
@@ -83,23 +90,66 @@ export class PlanetManager {
       );
       planet.mesh.name = name.toLowerCase();
       this.planets.push(planet);
+      this.focusableBodies.push(planet); // Add to focusable list
       this.sceneManager.scene.add(planet.group);
 
-      // if orbital elements are available, add orbit line
+      // If orbital elements are available, add orbit line
       if (orbitalElements) {
         planet.orbitLine = this.createOrbitPath(orbitalElements, name);
         this.sceneManager.scene.add(planet.orbitLine);
       }
     });
+
+    // Initialize satellites
+    Object.entries(CELESTIAL_BODIES).forEach(([name, data]) => {
+      if (data.type === "Satellite" && data.parent) {
+        const parentPlanet = this.planets.find(
+          (p) => p.name.toLowerCase() === data.parent.toLowerCase()
+        );
+
+        if (parentPlanet) {
+          // Scale satellite size relative to parent
+          const satelliteSize = scale.size(data.diameter / 2);
+
+          // Create satellite instance
+          const satellite = new Satellite(
+            name,
+            satelliteSize,
+            data.texture,
+            data.axialTilt || 0,
+            data.orbitalElements,
+            parentPlanet,
+            scale
+          );
+
+          // Optionally, create and add orbit line for the satellite
+          if (data.orbitalElements) {
+            satellite.orbitLine = this.createOrbitPath(
+              data.orbitalElements,
+              name
+            );
+            parentPlanet.group.add(satellite.orbitLine);
+          }
+
+          // Store the satellite in the array and focusable list
+          this.satellites.push(satellite);
+          this.focusableBodies.push(satellite); // Add to focusable list
+        } else {
+          console.warn(
+            `Parent planet "${data.parent}" not found for satellite "${name}".`
+          );
+        }
+      }
+    });
   }
 
-  /***
-   * Create a colored, visible orbit path for a planet
+  /**
+   * Create a colored, visible orbit path for a planet or satellite
    * @param {Object} orbitalElements - Keplerian orbital elements.
-   * @param {String} planetName - Name of the planet for color selection.
+   * @param {String} bodyName - Name of the body for color selection.
    * @returns {THREE.Line} - The orbit line object.
-   ***/
-  createOrbitPath(orbitalElements, planetName) {
+   **/
+  createOrbitPath(orbitalElements, bodyName) {
     const {
       semiMajorAxis: a,
       eccentricity: e,
@@ -108,10 +158,7 @@ export class PlanetManager {
       argumentOfPeriapsis: ω,
     } = orbitalElements;
 
-    let segments = 10000;
-    if (planetName.toLowerCase() === "pluto") {
-      segments = 1000000;
-    }
+    let segments = this.calculateSegments(orbitalElements, bodyName);
     let points = [];
 
     for (let t = 0; t <= 2 * Math.PI; t += (2 * Math.PI) / segments) {
@@ -149,18 +196,14 @@ export class PlanetManager {
 
       // First rotate around Z-axis by longitude of ascending node
       rotationMatrix.makeRotationZ(longitudeOfAscendingNodeRad);
-
       // Then rotate around X-axis by inclination
-      const inclinationMatrix = new THREE.Matrix4().makeRotationX(
-        inclinationRad
+      rotationMatrix.multiply(
+        new THREE.Matrix4().makeRotationX(inclinationRad)
       );
-      rotationMatrix.multiply(inclinationMatrix);
-
       // Finally rotate around Z-axis by argument of periapsis
-      const periapsisMatrix = new THREE.Matrix4().makeRotationZ(
-        argumentOfPeriapsisRad
+      rotationMatrix.multiply(
+        new THREE.Matrix4().makeRotationZ(argumentOfPeriapsisRad)
       );
-      rotationMatrix.multiply(periapsisMatrix);
 
       // Apply rotation to position vector
       const position = new THREE.Vector3(x_orb, y_orb, z_orb).applyMatrix4(
@@ -206,13 +249,13 @@ export class PlanetManager {
       points = refinedPoints;
     }
 
-    // create orbit geometry
+    // Create orbit geometry
     const orbitGeometry = new THREE.BufferGeometry().setFromPoints(points);
 
-    // Define colors based on planet
+    // Define colors based on body
     let color = 0xffffff; // Default white
 
-    switch (planetName.toLowerCase()) {
+    switch (bodyName.toLowerCase()) {
       case "mercury":
         color = 0xaaaaaa; // Grey
         break;
@@ -240,6 +283,9 @@ export class PlanetManager {
       case "pluto":
         color = 0x8a2be2; // BlueViolet
         break;
+      case "phobos":
+        color = 0x696969; // DimGray
+        break;
       default:
         color = 0xffffff; // White
     }
@@ -250,98 +296,20 @@ export class PlanetManager {
       opacity: 0.3,
     });
 
-    // **Use THREE.Line instead of THREE.LineLoop for elliptical orbits**
+    // Use THREE.Line instead of THREE.LineLoop for elliptical orbits
     const orbitLine = new THREE.Line(orbitGeometry, orbitMaterial);
 
     return orbitLine;
   }
 
   /**
-   * Focus on a planet
-   * @param {Number} index - The index of the planet
-   **/
-  focusOnPlanet(index) {
-    if (index < 0 || index >= this.planets.length) return;
-
-    this.currentFocusIndex = index;
-    const targetPlanet = this.planets[index];
-
-    // Calculate appropriate viewing distance based on planet size
-    const planetRadius = targetPlanet.mesh.geometry.parameters.radius;
-
-    if (targetPlanet.mesh.name === "sun") {
-      this.currentViewDistance = planetRadius * 5;
-    } else if (["jupiter", "saturn"].includes(targetPlanet.mesh.name)) {
-      this.currentViewDistance = planetRadius * 8;
-    } else if (["uranus", "neptune"].includes(targetPlanet.mesh.name)) {
-      this.currentViewDistance = planetRadius * 12;
-    } else {
-      this.currentViewDistance = planetRadius * 15;
-    }
-
-    // Set initial camera position with an offset
-    const cameraOffset = new THREE.Vector3(
-      this.currentViewDistance * 0.5, // Some X offset for perspective
-      this.currentViewDistance * 0.3, // Some Y offset for elevation
-      this.currentViewDistance // Z distance
-    );
-
-    // Update controls target to planet's position
-    this.sceneManager.controls.target.copy(targetPlanet.group.position);
-
-    // Position camera relative to planet
-    this.sceneManager.camera.position
-      .copy(targetPlanet.group.position)
-      .add(cameraOffset);
-
-    this.sceneManager.controls.update();
-    this.sceneManager.ui.updatePlanetInfo(targetPlanet.mesh);
-  }
-
-  /**
-   * Navigation callback for UI arrows
-   * @param {Number} direction - -1 for previous, 1 for next
-   **/
-  handleNavigate(direction) {
-    let newIndex;
-    if (direction === -1) {
-      newIndex =
-        this.currentFocusIndex <= 0
-          ? this.planets.length - 1
-          : this.currentFocusIndex - 1;
-    } else if (direction === 1) {
-      newIndex = (this.currentFocusIndex + 1) % this.planets.length;
-    } else {
-      return;
-    }
-    this.focusOnPlanet(newIndex);
-  }
-
-  /**
-   * Update the zoom speed based on the current planet
-   **/
-  updateZoomSpeed() {
-    if (this.currentFocusIndex >= 0) {
-      const targetPlanet = this.planets[this.currentFocusIndex].mesh;
-      const planetRadius = targetPlanet.geometry.parameters.radius;
-
-      // Adjust zoom speed based on planet size
-      const zoomSpeed = Math.max(0.5, planetRadius * 0.5);
-      this.sceneManager.controls.zoomSpeed = zoomSpeed;
-    } else {
-      // Default zoom speed for solar system view
-      this.sceneManager.controls.zoomSpeed = 1.0;
-    }
-  }
-
-  /**
    * Calculate the number of segments for an orbit
    * @param {Object} orbitalElements - Keplerian orbital elements
-   * @param {String} planetName - Name of the planet
+   * @param {String} bodyName - Name of the body
    * @returns {Number} - The number of segments
    **/
-  calculateSegments(orbitalElements, planetName) {
-    const { eccentricity, semiMajorAxis } = orbitalElements;
+  calculateSegments(orbitalElements, bodyName) {
+    const { eccentricity } = orbitalElements;
 
     // Base segments proportional to orbit size and eccentricity
     let segments = Math.floor(10000 * (1 + eccentricity * 5));
@@ -351,18 +319,116 @@ export class PlanetManager {
       segments *= 2;
     }
 
-    // Special cases for outer planets
-    switch (planetName.toLowerCase()) {
+    // Special cases for outer planets and satellites
+    switch (bodyName.toLowerCase()) {
       case "pluto":
         segments = Math.max(segments, 1000000);
         break;
       case "neptune":
       case "uranus":
+      case "phobos":
         segments = Math.max(segments, 50000);
         break;
     }
 
     return segments;
+  }
+
+  /**
+   * Update satellites positions and rotations
+   * @param {Number} timeElapsed - Elapsed time in days
+   **/
+  updateSatellites(timeElapsed) {
+    this.satellites.forEach((satellite) => {
+      satellite.calculateOrbitalPosition(timeElapsed);
+      satellite.rotateSatellite(0.001); // Adjust rotation speed as needed
+    });
+  }
+
+  /**
+   * Focus on a planet
+   * @param {Number} index - The index of the planet
+   **/
+  focusOnBody(index) {
+    const allBodies = this.getAllBodies();
+    console.log("allBodies", allBodies);
+    if (index < 0 || index >= allBodies.length) return;
+
+    this.currentFocusIndex = index;
+    const targetBody = allBodies[index];
+    console.log("targetBody", targetBody);
+    
+    // Calculate appropriate viewing distance based on body size
+    const bodyRadius = targetBody.mesh.geometry.parameters.radius;
+
+    // Adjust view distance based on body type
+    if (targetBody instanceof Satellite) {
+      this.currentViewDistance = bodyRadius * 30; // Satellites need closer view
+    } else if (targetBody.mesh.name === "sun") {
+      this.currentViewDistance = bodyRadius * 5;
+    } else if (["jupiter", "saturn"].includes(targetBody.mesh.name)) {
+      this.currentViewDistance = bodyRadius * 8;
+    } else if (["uranus", "neptune"].includes(targetBody.mesh.name)) {
+      this.currentViewDistance = bodyRadius * 12;
+    } else {
+      this.currentViewDistance = bodyRadius * 15;
+    }
+
+    // Set initial camera position with an offset
+    const cameraOffset = new THREE.Vector3(
+      this.currentViewDistance * 0.5,
+      this.currentViewDistance * 0.3,
+      this.currentViewDistance
+    );
+
+    // Update controls target to body's position
+    this.sceneManager.controls.target.copy(targetBody.group.position);
+
+    // Position camera relative to body
+    this.sceneManager.camera.position
+      .copy(targetBody.group.position)
+      .add(cameraOffset);
+
+    this.sceneManager.controls.update();
+    this.sceneManager.ui.updatePlanetInfo(targetBody.mesh);
+  }
+
+  /**
+   * Navigation callback for UI arrows
+   * @param {Number} direction - -1 for previous, 1 for next
+   **/
+  handleNavigate(direction) {
+    const allBodies = this.getAllBodies();
+    let newIndex;
+    
+    if (direction === -1) {
+      newIndex = this.currentFocusIndex <= 0
+        ? allBodies.length - 1
+        : this.currentFocusIndex - 1;
+    } else if (direction === 1) {
+      newIndex = (this.currentFocusIndex + 1) % allBodies.length;
+    } else {
+      return;
+    }
+    
+    this.focusOnBody(newIndex);
+  }
+
+    /**
+   * Update the zoom speed based on the current planet
+   **/
+    updateZoomSpeed() {
+      if (this.currentFocusIndex >= 0) {
+        const targetPlanet = this.getAllBodies()[this.currentFocusIndex].mesh;
+        const planetRadius = targetPlanet.geometry.parameters.radius;
+  
+        // Adjust zoom speed based on planet size
+        const zoomSpeed = Math.max(0.5, planetRadius * 0.5);
+        this.sceneManager.controls.zoomSpeed = zoomSpeed;
+      } else {
+        // Default zoom speed for solar system view
+      this.sceneManager.controls.zoomSpeed = 1.0;
+    }
   }
 
   /**
@@ -385,5 +451,10 @@ export class PlanetManager {
 
       planet.orbitLine.material.opacity = opacity;
     });
+  }
+
+  getAllBodies() {
+    // Combine planets and satellites into one array for navigation
+    return [...this.planets, ...this.satellites];
   }
 }

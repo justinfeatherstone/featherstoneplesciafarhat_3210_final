@@ -1,4 +1,4 @@
-import { SCALE_FACTOR } from "../constants.js";
+import { SCALE_FACTOR } from "../Constants.js";
 
 /**
  * Scale method for converting actual kilometers to scene units

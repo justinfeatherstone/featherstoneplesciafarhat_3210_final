@@ -340,4 +340,20 @@ export const CELESTIAL_BODIES = {
       orbitalPeriod: 90560, // Earth days
     },
   },
+  phobos: {
+    name: "Phobos",
+    type: "Satellite",
+    parent: "mars",
+    diameter: 22.2, // km
+    texture: "static/textures/phobos/phobos.jpg",
+    orbitalElements: {
+      semiMajorAxis: 9377, // km (relative to Mars)
+      eccentricity: 0.0151,
+      inclination: 1.093, // degrees
+      longitudeOfAscendingNode: 16.946, // degrees
+      argumentOfPeriapsis: 157.116, // degrees
+      meanAnomalyAtEpoch: 150.317, // degrees
+      orbitalPeriod: 0.319, // Earth days
+    },
+  },
 };

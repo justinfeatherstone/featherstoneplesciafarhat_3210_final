@@ -314,6 +314,12 @@ export class UI {
                 <span class="stat-label">Type:</span>
                 <span class="stat-value">${data.type}</span>
             </div>
+            ${data.parent ? `
+            <div class="stat-group">
+                <span class="stat-label">Parent Body:</span>
+                <span class="stat-value">${data.parent}</span>
+            </div>
+            ` : ''}
             <div class="stat-group">
                 <span class="stat-label">Diameter:</span>
                 <span class="stat-value">${data.diameter}</span>

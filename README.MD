@@ -93,6 +93,7 @@ http://localhost:5173
 ### Textures:
 - [Solar System Textures (Attribution 4.0 License)](https://www.solarsystemscope.com/textures/)
 - [JHT's Planetary Pixel Emporium (Non-Redistributable)](https://planetpixelemporium.com/)
+- [Planet Texture Maps Wiki (Attribution 4.0 License)](https://planet-texture-maps.fandom.com/wiki/)
 
 ## Fonts
 - [Google Fonts](https://fonts.google.com/)

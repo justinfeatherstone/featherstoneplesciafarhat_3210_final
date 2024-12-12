@@ -72,11 +72,16 @@ export class AnimationLoop {
       this.sceneManager.uiShader.update();
     }
 
-    // **Update Camera Controls Target and Position if a Planet is Focused**
+    // Update Camera Controls Target and Position if a Planet is Focused
     if (this.planetManager.currentFocusIndex !== -1) {
-      const targetPlanet =
-        this.planetManager.planets[this.planetManager.currentFocusIndex];
-      const planetPosition = targetPlanet.group.position;
+      const targetPlanet = this.planetManager.getAllBodies()[this.planetManager.currentFocusIndex];
+      let planetPosition = new THREE.Vector3();
+
+      if (targetPlanet.parentPlanet && targetPlanet.parentPlanet.group) {
+        planetPosition.copy(targetPlanet.parentPlanet.group.position);
+      } else {
+        planetPosition.copy(targetPlanet.group.position);
+      }
 
       // Get the current camera-to-target vector
       const cameraToTarget = new THREE.Vector3().subVectors(
@@ -88,9 +93,7 @@ export class AnimationLoop {
       this.sceneManager.controls.target.copy(planetPosition);
 
       // Move the camera by the same offset to maintain relative position
-      this.sceneManager.camera.position
-        .copy(planetPosition)
-        .add(cameraToTarget);
+      this.sceneManager.camera.position.copy(planetPosition).add(cameraToTarget);
 
       // Let OrbitControls handle rotation and zoom
       this.sceneManager.controls.update();
@@ -150,6 +153,9 @@ export class AnimationLoop {
         );
       }
     }
+
+    // Update satellite positions
+    this.planetManager.updateSatellites(deltaTimeDays);
 
     // Render the scene
     this.sceneManager.renderer.render(
