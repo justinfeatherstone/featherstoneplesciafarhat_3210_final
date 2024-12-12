@@ -259,3 +259,4 @@ $RECYCLE.BIN/
 
 *.log
 *.txt
+package-lock.json

@@ -6,15 +6,56 @@ export class UI {
      * @param {Object} planetData - The planet data
      * @param {Function} onNavigate - Callback for navigating planets
      */
-    constructor(planetData, onNavigate) {
+    constructor(planetData, onNavigate, timeScale, isPaused, planetManager) {
         this.dataManager = new CelestialDataManager(planetData);
+        this.planetManager = planetManager; // Store reference to PlanetManager
         this.planetInfo = document.getElementById('planet-details');
         this.sectionStates = this.loadSectionStates();
         this.defaultCollapsed = ['Quick Facts', 'Atmosphere']; // Sections collapsed by default
         this.onNavigate = onNavigate; // Store the callback
+        this.timeScale = timeScale;
+        this.isPaused = isPaused;
         this.createInfoPanels();
         this.setupEventListeners();
+        this.initTimeControls(timeScale, isPaused);
+        this.createOrbitControls(planetManager.planets); // Initialize orbit controls
     }
+
+    initTimeControls(timeScale, isPaused) {
+        const slider = document.getElementById("timeSlider");
+        const timeValue = document.getElementById("timeValue");
+        const pauseButton = document.getElementById("pauseButton");
+      
+        // Initialize slider to real-time
+        slider.value = 0;
+        this.timeScale.value = 1;
+      
+        slider.addEventListener("input", (e) => {
+          const value = parseFloat(e.target.value);
+      
+          if (value < 0) {
+            // Slower than real-time
+            this.timeScale.value = 1 / Math.pow(10, Math.abs(value));
+          } else {
+            // Real-time or faster
+            this.timeScale.value = Math.pow(10, value);
+          }
+      
+          // Update display text
+          if (this.timeScale.value === 1) {
+            timeValue.textContent = "Real-time";
+          } else if (this.timeScale.value > 1) {
+            timeValue.textContent = `${this.timeScale.value.toFixed(0)}x faster`;
+          } else {
+            timeValue.textContent = `${(1 / this.timeScale.value).toFixed(2)}x slower`;
+          }
+        });
+      
+        pauseButton.addEventListener("click", () => {
+          this.isPaused.value = !this.isPaused.value;
+          pauseButton.textContent = this.isPaused.value ? "Resume" : "Pause";
+        });
+      }
 
     loadSectionStates() {
         const saved = localStorage.getItem('planetSectionStates');
@@ -29,6 +70,44 @@ export class UI {
      * Create the info panels
      */
     createInfoPanels() {
+        const panels = document.querySelectorAll('.panel');
+        
+        panels.forEach(panel => {
+            // Assign 'right' class to the planet-info panel if not already present
+            if (panel.classList.contains('planet-info')) {
+                panel.classList.add('right');
+            }
+
+            // Create minimize toggle button
+            const toggleBtn = document.createElement('button');
+            toggleBtn.classList.add('minimize-toggle');
+
+            // Determine initial button symbol
+            const isTimeControl = panel.classList.contains('time-control');
+            const isRightPanel = panel.classList.contains('right');
+            let isMinimized = panel.classList.contains('minimized');
+
+            const updateButtonSymbol = () => {
+                if (isRightPanel) {
+                    toggleBtn.textContent = isMinimized ? '◀' : '▶';
+                } else if (isTimeControl) {
+                    toggleBtn.textContent = isMinimized ? '▲' : '▼';
+                } else {
+                    toggleBtn.textContent = isMinimized ? '▶' : '◀';
+                }
+            };
+
+            updateButtonSymbol();
+
+            toggleBtn.addEventListener('click', () => {
+                panel.classList.toggle('minimized');
+                isMinimized = panel.classList.contains('minimized');
+                updateButtonSymbol();
+            });
+
+            panel.appendChild(toggleBtn);
+        });
+
         const controlPanel = document.querySelector('.control-buttons');
         controlPanel.innerHTML = `
             <div class="control-group">
@@ -256,5 +335,40 @@ export class UI {
                 }
             });
         });
+    }
+
+    createOrbitControls(planets) {
+        const orbitControlsContainer = document.getElementById('orbit-controls');
+        orbitControlsContainer.innerHTML = ''; // Clear existing controls
+
+        planets.forEach((planet, index) => {
+            const wrapper = document.createElement('div');
+            wrapper.classList.add('orbit-toggle-wrapper');
+
+            const checkbox = document.createElement('input');
+            checkbox.type = 'checkbox';
+            checkbox.id = `orbit-${planet.name}`;
+            checkbox.classList.add('orbit-checkbox');
+            checkbox.checked = true; // Default to visible
+            checkbox.dataset.index = index;
+
+            const label = document.createElement('label');
+            label.htmlFor = `orbit-${planet.name}`;
+            label.classList.add('orbit-label');
+            label.textContent = `${planet.name.charAt(0).toUpperCase() + planet.name.slice(1)}`;
+
+            checkbox.addEventListener('change', () => this.toggleOrbitVisibility(index));
+
+            wrapper.appendChild(checkbox);
+            wrapper.appendChild(label);
+            orbitControlsContainer.appendChild(wrapper);
+        });
+    }
+
+    toggleOrbitVisibility(index) {
+        const planet = this.planetManager.planets[index];
+        if (planet.orbitLine) {
+            planet.orbitLine.visible = !planet.orbitLine.visible;
+        }
     }
 }
