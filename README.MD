@@ -12,11 +12,11 @@ An interactive 3D visualization of our solar system built with Three.js, featuri
 
 ## User Manual
 - A user manual is available in the project directory under the name "User Manual.pdf"
-[User Manual](./User Manual.pdf)
+[User Manual](/User%20Manual.pdf)
 
 ## Presentation
-- A presentation is available in the project directory under the name "Presentation.pdf"
-[Presentation](CS3210 - Final Presentation.pdf)
+- A presentation is available in the project directory under the name "CS3210 - Final Presentation.pdf"
+[Presentation](/CS3210%20-%20Final%20Presentation.pdf)
 
 ## Video 
 - A video is available showing the project being used: [Video](https://drive.google.com/file/d/1y9NlHOrsaEBpSw1uCa0fp7ucT4ayOcVF/view?usp=sharing)
